@@ -8,7 +8,7 @@ from models.backbone import get_backbone
 from models.head import get_rpn_head
 from models.neck import get_neck
 from utils.loss import select_cross_entropy_loss, weight_l1_loss
-from model.gcn.similar_gcn import SimilarGCN
+from models.gcn.similar_gcn import SimilarGCN
 
 class BaseSiamModel(nn.Module):
     def __init__(self):

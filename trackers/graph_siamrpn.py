@@ -41,7 +41,7 @@ class GraphSiamRPN(BaseTracker):
         self.channel_average = img.mean((0, 1))
         examplar = self.get_subwindow(img, bbox_pos, cfg.TRACK.EXAMPLAR_SIZE, size_z, self.channel_average)
         bbox = self._get_bbox(cfg.TRACK.EXAMPLAR_SIZE // 2, bbox_size, cfg.TRACK.EXAMPLAR_SIZE / size_z)
-        self.examplars = [self.examplar_aug(examplar, bbox, cfg.TRACK.INSTANCE_SIZE) for i in range(cfg.META.MEMORY_SIZE)[0]])
+        self.examplars = [self.examplar_aug(examplar, bbox, cfg.TRACK.INSTANCE_SIZE)[0] for i in range(cfg.META.MEMORY_SIZE)]
         examplars = torch.from_numpy(np.stack(self.examplars).astype(np.float32).transpose((0, 3, 1, 2))).cuda()
         self.model.set_examplar(examplars)
         self.bbox_pos = bbox_pos
