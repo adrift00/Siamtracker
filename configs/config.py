@@ -162,8 +162,9 @@ cfg.GRAPH.EXAMPLAR_SIZE=10
 cfg.GRAPH.UPDATE_FREQ=5
 
 cfg.GRAPH.BATCH_SIZE=1 # now only support 1 
-cfg.GRAPH.EPOCHS=5
+cfg.GRAPH.EPOCHS=20
 cfg.GRAPH.LR=0.0001
+cfg.GRAPH.WEIGHT_DECAY=0.0001
 cfg.GRAPH.PRETRAIN_PATH='./snapshot/alexnet/checkpoint_e46.pth'
 
 cfg.GRAPH.SNAPSHOT_DIR='./snapshot/graph'

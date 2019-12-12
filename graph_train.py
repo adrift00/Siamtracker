@@ -1,4 +1,4 @@
-import os 
+import os
 import time
 import logging
 import json
@@ -12,7 +12,7 @@ from dataset.dataset import GraphDataset
 from configs.config import cfg
 from utils.model_load import load_pretrain
 from models.model_builder import get_model
-from utils.log_helper import init_log, add_file_handler,print_speed
+from utils.log_helper import init_log, add_file_handler, print_speed
 from utils.misc import commit, describe
 from utils.average_meter import AverageMeter
 
@@ -35,28 +35,28 @@ def build_optimizer(model):
     logger.info("build optimizer!")
     parameters = [
         {"params": model.gcn.parameters(), "lr": cfg.GRAPH.LR},  # TODO: may be can be optimized
-        {"params": model.rpn.parameters(), "lr": cfg.GRAPH.LR},
+        {"params": model.rpn.parameters(), "lr": cfg.GRAPH.LR*0.5},
     ]
-    optimizer = Adam(parameters, lr=cfg.GRAPH.LR)
+    optimizer = Adam(parameters, weight_decay=cfg.GRAPH.WEIGHT_DECAY)
     return optimizer
 
 
 def train(dataloader, optimizer, model):
-    iter=0
+    iter = 0
     begin_time = 0.0
-    average_meter=AverageMeter()
-    num_per_epoch = len(dataloader.dataset) // (cfg.GRAPH.BATCH_SIZE )
+    average_meter = AverageMeter()
+    num_per_epoch = len(dataloader.dataset) // (cfg.GRAPH.BATCH_SIZE)
     for epoch in range(cfg.GRAPH.EPOCHS):
         dataloader.dataset.shuffle()
-        begin_time=time.time()
+        begin_time = time.time()
         for data in dataloader:
             examplar_imgs = data['examplars'].cuda()
             search_img = data['search'].cuda()
             gt_cls = data['gt_cls'].cuda()
             gt_delta = data['gt_delta'].cuda()
             delta_weight = data['gt_delta_weight'].cuda()
-            data_time=time.time()-begin_time
-            examplar_imgs=examplar_imgs[0]
+            data_time = time.time()-begin_time
+            examplar_imgs = examplar_imgs[0]
 
             losses = model.forward(examplar_imgs, search_img, gt_cls, gt_delta, delta_weight)
             cls_loss = losses['cls_loss']
@@ -71,13 +71,13 @@ def train(dataloader, optimizer, model):
             batch_info['batch_time'] = batch_time
             average_meter.update(**batch_info)
             if iter % cfg.TRAIN.PRINT_EVERY == 0:
-               logger.info('epoch: {}, iter: {}, cls_loss: {}, loc_loss: {}, loss: {}'
-                           .format(epoch + 1, iter, cls_loss.item(), loc_loss.item(), loss.item()))
-               print_speed(iter + 1 ,
-                           average_meter.batch_time.avg,
-                           cfg.GRAPH.EPOCHS * num_per_epoch)
-            data_begin_time=time.time()
-            iter+=1
+                logger.info('epoch: {}, iter: {}, cls_loss: {}, loc_loss: {}, loss: {}'
+                            .format(epoch + 1, iter, cls_loss.item(), loc_loss.item(), loss.item()))
+                print_speed(iter + 1,
+                            average_meter.batch_time.avg,
+                            cfg.GRAPH.EPOCHS * num_per_epoch)
+            data_begin_time = time.time()
+            iter += 1
         # save train_state
         if not os.path.exists(cfg.GRAPH.SNAPSHOT_DIR):
             os.makedirs(cfg.GRAPH.SNAPSHOT_DIR)

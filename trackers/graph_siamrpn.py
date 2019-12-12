@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 from utils.bbox import delta2bbox, corner2center, Corner, Center
 from utils.visual import show_single_bbox
-from utils.anchor import AnchorGenerator 
+from utils.anchor import AnchorGenerator
 from trackers.base_tracker import BaseTracker
 from configs.config import cfg
 from dataset.augmentation import Augmentation
@@ -41,7 +41,8 @@ class GraphSiamRPN(BaseTracker):
         self.channel_average = img.mean((0, 1))
         examplar = self.get_subwindow(img, bbox_pos, cfg.TRACK.EXAMPLAR_SIZE, size_z, self.channel_average)
         bbox = self._get_bbox(cfg.TRACK.EXAMPLAR_SIZE // 2, bbox_size, cfg.TRACK.EXAMPLAR_SIZE / size_z)
-        self.examplars = [self.examplar_aug(examplar, bbox, cfg.TRACK.INSTANCE_SIZE)[0] for i in range(cfg.META.MEMORY_SIZE)]
+        self.examplars = [self.examplar_aug(examplar, bbox, cfg.TRACK.INSTANCE_SIZE)[0]
+                          for i in range(cfg.META.MEMORY_SIZE)]
         examplars = torch.from_numpy(np.stack(self.examplars).astype(np.float32).transpose((0, 3, 1, 2))).cuda()
         self.model.set_examplar(examplars)
         self.bbox_pos = bbox_pos
@@ -78,15 +79,15 @@ class GraphSiamRPN(BaseTracker):
         pscore = penalty * score
         pscore = pscore * (1 - cfg.TRACK.WINDOW_INFLUENCE) + \
             self.window * cfg.TRACK.WINDOW_INFLUENCE
-        best_idx = np.argmax(pscore)         
+        best_idx = np.argmax(pscore)
         best_bbox = pred_bbox[best_idx, :]
         best_score = pscore[best_idx]
         # update track state
-        best_bbox[0]-=cfg.TRACK.INSTANCE_SIZE//2 
-        best_bbox[1]-=cfg.TRACK.INSTANCE_SIZE//2
+        best_bbox[0] -= cfg.TRACK.INSTANCE_SIZE//2
+        best_bbox[1] -= cfg.TRACK.INSTANCE_SIZE//2
         best_bbox = best_bbox / scale_z
-        cx = best_bbox[0] + self.bbox_pos[0]  
-        cy = best_bbox[1] + self.bbox_pos[1] 
+        cx = best_bbox[0] + self.bbox_pos[0]
+        cy = best_bbox[1] + self.bbox_pos[1]
         lr = penalty[best_idx] * score[best_idx] * cfg.TRACK.LR
         w = self.bbox_size[0] * (1 - lr) + lr * best_bbox[2]
         h = self.bbox_size[1] * (1 - lr) + lr * best_bbox[3]
@@ -95,7 +96,7 @@ class GraphSiamRPN(BaseTracker):
         self.bbox_size = pred_bbox[2:4]
         self.track_frame += 1
         # update examplars
-        if self.track_frame%cfg.GRAPH.UPDATE_FREQ==0:
+        if self.track_frame % cfg.GRAPH.UPDATE_FREQ == 0:
             size_z = self._size_z(self.bbox_size)
             self.channel_average = img.mean((0, 1))
             examplar = self.get_subwindow(img, bbox_pos, cfg.TRACK.EXAMPLAR_SIZE, size_z, self.channel_average)
@@ -108,9 +109,3 @@ class GraphSiamRPN(BaseTracker):
             'bbox': pred_bbox,
             'best_score': score[best_idx]
         }
-
-
-
-
-
-
