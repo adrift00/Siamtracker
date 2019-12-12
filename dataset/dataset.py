@@ -310,16 +310,51 @@ class MetaDataset(SubDataset):
         test_annos = [self.annos[video][trackid][test_frame] for test_frame in test_frames]
         return (examplar_path, examplar_anno), (train_paths, train_annos), (test_paths, test_annos)
 
-    def get_bbox(self, image, ori_bbox):
-        img_h, img_w = image.shape[:2]
-        w, h = ori_bbox[2] - ori_bbox[0], ori_bbox[3] - ori_bbox[1]
-        context_amount = 0.5
-        wc_z = w + context_amount * (w + h)
-        hc_z = h + context_amount * (w + h)
-        s_z = np.sqrt(wc_z * hc_z)
-        scale_z = cfg.TRAIN.EXAMPLER_SIZE / s_z
-        w = w * scale_z
-        h = h * scale_z
-        cx, cy = img_w // 2, img_h // 2
-        bbox = center2corner(Center(cx, cy, w, h))
-        return bbox
+
+class GraphDataset(MetaDataset):
+
+    def __getitem__(self, idx):
+        examplar_frames,search_frame= self.get_anno(idx)
+        examplar_imgs = [cv2.imread(examplar_path) for examplar_path in examplar_frames[0]]
+        examplar_bboxes = [self.get_bbox(img, anno) for img, anno in zip(examplar_imgs, examplar_frames[1])]
+        examplars = [self.examplar_aug(examplar_img, examplar_bbox, cfg.TRAIN.EXAMPLAR_SIZE, gray=False)[0]
+                                        for examplar_img, examplar_bbox in zip(examplar_imgs, examplar_bboxes)]
+        examplars=np.stack(examplars, axis=0).transpose((0, 3, 1, 2)).astype(np.float32)
+
+        search_img=cv2.imread(search_frame[0])
+        search_bbox=self.get_bbox(search_img,search_frame[1])
+        search,bbox=self.search_aug(search_img, search_bbox, cfg.TRAIN.SEARCH_SIZE, gray=False)
+
+        gt_cls, gt_delta, gt_delta_weight = self.anchor_target(bbox)
+        return {
+            'examplars':examplars,
+            'search':search,
+            'gt_cls': gt_cls,
+            'gt_delta': gt_delta,
+            'gt_delta_weight': gt_delta_weight
+        }
+
+
+    def get_anno(self, idx):
+        video = self.videos[idx]
+        trackid = np.random.choice(list(self.annos[video].keys()))
+        frames = self.annos[video][trackid]['frames']
+        half = len(frames) // 2
+        left = 0
+        right = max(half, 1)
+        examplar_range = frames[left:right]
+        examplar_frames = np.random.choice(examplar_range, size=cfg.GRAPH.EXAMPLAR_SIZE, replace=True)
+        left = half
+        right = max(left + 1, len(frames) - 1)
+        search_range = frames[left:right]
+        search_frame = np.random.choice(search_range)
+        #examplars
+        examplar_frames = ['{:06d}'.format(examplar_frame) for examplar_frame in examplar_frames]
+        examplar_paths = [os.path.join(self.data_dir, video, self.filename_format.format(examplar_frame, trackid, 'x'))
+                       for examplar_frame in examplar_frames]
+        examplar_annos = [self.annos[video][trackid][examplar_frame] for examplar_frame in examplar_frames]
+        #search
+        search_frame = '{:06d}'.format(search_frame) 
+        search_path = os.path.join(self.data_dir, video, self.filename_format.format(search_frame, trackid, 'x'))
+        search_anno = self.annos[video][trackid][search_frame]
+        return (examplar_paths, examplar_annos), (search_path,search_anno)

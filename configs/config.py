@@ -133,17 +133,7 @@ cfg.TRACK.PENALTY_K = 0.16
 cfg.TRACK.WINDOW_INFLUENCE = 0.40
 cfg.TRACK.LR = 0.3
 
-
-
-
-#update
-cfg.UPDATE=CfgNode()
-cfg.UPDATE.NUM_SAMPLES=30
-cfg.UPDATE.INIT_ITER=20
-cfg.UPDATE.TRACK_ITER=2
-cfg.UPDATE.UPDATE_FREQ=10
-
-#meta training
+#meta adapt
 cfg.META=CfgNode()
 cfg.META.VID = CfgNode()
 cfg.META.VID.DATA_DIR = '../pysot/training_dataset/vid/crop511'
@@ -165,3 +155,25 @@ cfg.META.TEST_SIZE=5
 cfg.META.MEMORY_SIZE=10
 cfg.META.UPDATE_THRESH=0.8
 cfg.META.UPDATE_FREQ=20
+
+#graph 
+cfg.GRAPH=CfgNode()
+
+cfg.GRAPH.EXAMPLAR_SIZE=10
+cfg.GRAPH.UPDATE_FREQ=5
+
+cfg.GRAPH.BATCH_SIZE=1 # now only support 1 
+cfg.GRAPH.EPOCHS=5
+cfg.GRAPH.LR=0.0001
+cfg.GRAPH.PRETRAIN_PATH='.snapshot/alexnet/checkpoint_e46.pth'
+
+cfg.GRAPH.SNAPSHOT_DIR='./snapshot/graph'
+cfg.GRAPH.LOG_DIR='.logs/alexnet_graph'
+
+cfg.GRAPH.KWARGS=CfgNode(new_allowed=True)
+cfg.GRAPH.KWARGS.input_channels=256
+cfg.GRAPH.KWARGS.output_channels=256
+
+
+
+
