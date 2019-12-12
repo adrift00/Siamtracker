@@ -123,8 +123,7 @@ cfg.TRAIN.LR_WARMUP.KWARGS.step = 1
 # track
 cfg.TRACK = CfgNode()
 cfg.TRACK.TYPE='SiamRPNTracker'
-cfg.TRACK.DATA_DIR = '../pysot/testing_dataset/VOT2016'  
-cfg.TRACK.ANNO_FILE = 'VOT2016.json'
+cfg.TRACK.DATA_DIR = '../pysot/testing_dataset/'  
 cfg.TRACK.RESULT_DIR='./result'
 cfg.TRACK.EXAMPLAR_SIZE = 127
 cfg.TRACK.INSTANCE_SIZE = 287
@@ -165,10 +164,10 @@ cfg.GRAPH.UPDATE_FREQ=5
 cfg.GRAPH.BATCH_SIZE=1 # now only support 1 
 cfg.GRAPH.EPOCHS=5
 cfg.GRAPH.LR=0.0001
-cfg.GRAPH.PRETRAIN_PATH='.snapshot/alexnet/checkpoint_e46.pth'
+cfg.GRAPH.PRETRAIN_PATH='./snapshot/alexnet/checkpoint_e46.pth'
 
 cfg.GRAPH.SNAPSHOT_DIR='./snapshot/graph'
-cfg.GRAPH.LOG_DIR='.logs/alexnet_graph'
+cfg.GRAPH.LOG_DIR='./logs/alexnet_graph'
 
 cfg.GRAPH.KWARGS=CfgNode(new_allowed=True)
 cfg.GRAPH.KWARGS.input_channels=256

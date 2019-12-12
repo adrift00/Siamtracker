@@ -1,4 +1,5 @@
-import os import time
+import os 
+import time
 import logging
 import json
 import argparse
@@ -10,8 +11,8 @@ from torch.optim import Adam
 from dataset.dataset import GraphDataset
 from configs.config import cfg
 from utils.model_load import load_pretrain
-from models.model_builder import GraphSiamModel
-from utils.log_helper import init_log, add_file_handler
+from models.model_builder import get_model
+from utils.log_helper import init_log, add_file_handler,print_speed
 from utils.misc import commit, describe
 from utils.average_meter import AverageMeter
 
@@ -43,7 +44,8 @@ def build_optimizer(model):
 def train(dataloader, optimizer, model):
     iter=0
     begin_time = 0.0
-    num_per_epoch = len(dataloader.dataset) // (cfg.TRAIN.BATCH_SIZE )
+    average_meter=AverageMeter()
+    num_per_epoch = len(dataloader.dataset) // (cfg.GRAPH.BATCH_SIZE )
     for epoch in range(cfg.GRAPH.EPOCHS):
         dataloader.dataset.shuffle()
         begin_time=time.time()
@@ -52,8 +54,9 @@ def train(dataloader, optimizer, model):
             search_img = data['search'].cuda()
             gt_cls = data['gt_cls'].cuda()
             gt_delta = data['gt_delta'].cuda()
-            delta_weight = data['delta_weight'].cuda()
+            delta_weight = data['gt_delta_weight'].cuda()
             data_time=time.time()-begin_time
+            examplar_imgs=examplar_imgs[0]
 
             losses = model.forward(examplar_imgs, search_img, gt_cls, gt_delta, delta_weight)
             cls_loss = losses['cls_loss']
@@ -64,8 +67,8 @@ def train(dataloader, optimizer, model):
             optimizer.step()
             batch_time = time.time() - begin_time
             batch_info = {}
-            batch_info['data_time'] = average_reduce(data_time)
-            batch_info['batch_time'] = average_reduce(batch_time)
+            batch_info['data_time'] = data_time
+            batch_info['batch_time'] = batch_time
             average_meter.update(**batch_info)
             if iter % cfg.TRAIN.PRINT_EVERY == 0:
                logger.info('epoch: {}, iter: {}, cls_loss: {}, loc_loss: {}, loss: {}'
@@ -100,10 +103,8 @@ def main():
         )
     logger.info("Version Information: \n{}\n".format(commit()))
     logger.info("config \n{}".format(json.dumps(cfg, indent=4)))
-    model = GraphSiamModel().cuda()
+    model = get_model('GraphSiamModel').cuda()
     model = load_pretrain(model, cfg.GRAPH.PRETRAIN_PATH)
-    # init meta train
-    model.meta_train_init()
     # parametes want to optim
     optimizer = build_optimizer(model)
     dataloader = build_dataloader()

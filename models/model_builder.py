@@ -10,6 +10,7 @@ from models.neck import get_neck
 from utils.loss import select_cross_entropy_loss, weight_l1_loss
 from models.gcn.similar_gcn import SimilarGCN
 
+
 class BaseSiamModel(nn.Module):
     def __init__(self):
         super(BaseSiamModel, self).__init__()
@@ -163,7 +164,7 @@ class MetaSiamModel(BaseSiamModel):
 
 class GraphSiamModel(BaseSiamModel):
     def __init__(self):
-        super(GraphSiamModel,self).__init()
+        super(GraphSiamModel,self).__init__()
         self.gcn=SimilarGCN(**cfg.GRAPH.KWARGS)
 
     def set_exmaplar(self,examplars):
@@ -180,6 +181,7 @@ class GraphSiamModel(BaseSiamModel):
             search = self.adjust(search)
 
         examplar=self.gcn(examplars)
+        #import ipdb;ipdb.set_trace()
         pred_cls, pred_loc = self.rpn(examplar, search)
         pred_cls = self.log_softmax(pred_cls)
         cls_loss = select_cross_entropy_loss(pred_cls, gt_cls)
@@ -202,3 +204,9 @@ class GraphSiamModel(BaseSiamModel):
 
 
 
+models={'BaseSiamModel':BaseSiamModel,
+        'MetaSiamModel':MetaSiamModel,
+        'GraphSiamModel':GraphSiamModel}
+
+def get_model(model_name,**kwargs):
+    return models[model_name](**kwargs)

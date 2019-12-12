@@ -17,7 +17,7 @@ from configs.config import cfg
 from dataset.dataset import TrainDataset
 from utils.log_helper import init_log, add_file_handler, print_speed
 from utils.lr_scheduler import build_lr_scheduler
-from models.model_builder import ModelBuilder
+from models.model_builder import get_model
 from utils.distributed import get_world_size, dist_init, DistModule, get_rank, reduce_gradients, average_reduce
 from utils.misc import commit, describe
 from utils.model_load import load_pretrain, restore_from
@@ -210,7 +210,7 @@ def main():
 
     logger.info('dist init done!')
     train_dataloader = build_data_loader()
-    model = ModelBuilder().cuda().train()
+    model = get_model('BaseSiamModel').cuda().train()
     dist_model = DistModule(model)
     optimizer, lr_scheduler = build_optimizer_lr(dist_model.module,cfg.TRAIN.START_EPOCH)
     if cfg.TRAIN.BACKBONE_PRETRAIN:

@@ -55,7 +55,7 @@ class MetaSiamRPN(BaseTracker):
         gt_data = zip(*[self.anchor_target(bbox) for bbox in self.bbox_mem])
         gt_cls, gt_loc, gt_loc_weight = map(lambda x: torch.from_numpy(np.stack(x)).cuda(), gt_data)
         searches = torch.from_numpy(np.stack(self.search_mem).astype(np.float32).transpose((0, 3, 1, 2))).cuda()
-        self.model.meta_set_examplar(self.examplars, searches, gt_cls, gt_loc, gt_loc_weight)
+        self.model.set_examplar(self.examplars, searches, gt_cls, gt_loc, gt_loc_weight)
         self.bbox_pos = bbox_pos
         self.bbox_size = bbox_size
         self.track_frame = 0
@@ -67,7 +67,7 @@ class MetaSiamRPN(BaseTracker):
         size_x = self._size_x(bbox_size)
         search = self.get_subwindow(img, self.bbox_pos, cfg.TRACK.INSTANCE_SIZE, size_x, self.channel_average)
         new_search = torch.from_numpy(search[np.newaxis, :].astype(np.float32)).permute(0, 3, 1, 2).cuda()
-        cls, loc = self.model.meta_track(new_search)
+        cls, loc = self.model.track(new_search)
         score = self._convert_score(cls)
         loc = loc.reshape(4, self.anchor_generator.anchor_num, loc.size()[2], loc.size()[3])
         pred_bbox = delta2bbox(self.all_anchor, loc)
