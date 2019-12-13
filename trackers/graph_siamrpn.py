@@ -41,8 +41,8 @@ class GraphSiamRPN(BaseTracker):
         self.channel_average = img.mean((0, 1))
         examplar = self.get_subwindow(img, bbox_pos, cfg.TRACK.EXAMPLAR_SIZE, size_z, self.channel_average)
         bbox = self._get_bbox(cfg.TRACK.EXAMPLAR_SIZE // 2, bbox_size, cfg.TRACK.EXAMPLAR_SIZE / size_z)
-        self.examplars = [self.examplar_aug(examplar, bbox, cfg.TRACK.INSTANCE_SIZE)[0]
-                          for i in range(cfg.META.MEMORY_SIZE)]
+        self.examplars = [self.examplar_aug(examplar, bbox, cfg.TRACK.EXAMPLAR_SIZE)[0]
+                          for i in range(cfg.GRAPH.EXAMPLAR_SIZE)]
         examplars = torch.from_numpy(np.stack(self.examplars).astype(np.float32).transpose((0, 3, 1, 2))).cuda()
         self.model.set_examplar(examplars)
         self.bbox_pos = bbox_pos
@@ -96,14 +96,14 @@ class GraphSiamRPN(BaseTracker):
         self.bbox_size = pred_bbox[2:4]
         self.track_frame += 1
         # update examplars
-        if self.track_frame % cfg.GRAPH.UPDATE_FREQ == 0:
-            size_z = self._size_z(self.bbox_size)
-            self.channel_average = img.mean((0, 1))
-            examplar = self.get_subwindow(img, bbox_pos, cfg.TRACK.EXAMPLAR_SIZE, size_z, self.channel_average)
-            del self.examplars[0]
-            self.examplars.append(examplar)
-            examplars = torch.from_numpy(np.stack(self.examplars).astype(np.float32).transpose((0, 3, 1, 2))).cuda()
-            self.model.set_examplar(examplars)
+        # if self.track_frame % cfg.GRAPH.UPDATE_FREQ == 0:
+        #    size_z = self._size_z(self.bbox_size)
+        #    self.channel_average = img.mean((0, 1))
+        #    examplar = self.get_subwindow(img, self.bbox_pos, cfg.TRACK.EXAMPLAR_SIZE, size_z, self.channel_average)
+        #    del self.examplars[0]
+        #    self.examplars.append(examplar)
+        #    examplars = torch.from_numpy(np.stack(self.examplars).astype(np.float32).transpose((0, 3, 1, 2))).cuda()
+        #    self.model.set_examplar(examplars)
 
         return {
             'bbox': pred_bbox,

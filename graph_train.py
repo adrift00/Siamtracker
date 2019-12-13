@@ -76,7 +76,7 @@ def train(dataloader, optimizer, model):
                 print_speed(iter + 1,
                             average_meter.batch_time.avg,
                             cfg.GRAPH.EPOCHS * num_per_epoch)
-            data_begin_time = time.time()
+            begin_time = time.time()
             iter += 1
         # save train_state
         if not os.path.exists(cfg.GRAPH.SNAPSHOT_DIR):

@@ -167,11 +167,11 @@ class GraphSiamModel(BaseSiamModel):
         super(GraphSiamModel,self).__init__()
         self.gcn=SimilarGCN(**cfg.GRAPH.KWARGS)
 
-    def set_exmaplar(self,examplars):
+    def set_examplar(self,examplars):
         examplars = self.backbone(examplars)
         if cfg.ADJUST.USE:
             examplars=self.adjust(examplars)
-        self.examplars=self.gcn(examplars)
+        self.examplar=self.gcn(examplars)
 
     def forward(self, examplars, search, gt_cls, gt_loc, gt_loc_weight):
         examplars = self.backbone(examplars)
@@ -181,7 +181,6 @@ class GraphSiamModel(BaseSiamModel):
             search = self.adjust(search)
 
         examplar=self.gcn(examplars)
-        #import ipdb;ipdb.set_trace()
         pred_cls, pred_loc = self.rpn(examplar, search)
         pred_cls = self.log_softmax(pred_cls)
         cls_loss = select_cross_entropy_loss(pred_cls, gt_cls)
@@ -198,7 +197,8 @@ class GraphSiamModel(BaseSiamModel):
         if cfg.ADJUST.USE:
             search = self.adjust(search)
         examplar = self.examplar
-        pred_cls, pred_loc = self.rpn(examplar, search, self.weight, self.bn_weight)
+        #import ipdb;ipdb.set_trace()
+        pred_cls, pred_loc = self.rpn(examplar, search)
         return pred_cls, pred_loc
 
 
