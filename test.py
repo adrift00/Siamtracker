@@ -94,6 +94,11 @@ def ope_evaluate(dataset, tracker):
             tic = cv2.getTickCount()
             if idx == 0:
                 tracker.init(frame, gt_bbox)  # cx,cy,w,h
+                track_result = tracker.track(frame)
+                bbox = track_result['bbox']  # cx,cy,w,h
+                bbox_ = [bbox[0] - bbox[2] / 2, bbox[1] - bbox[3] / 2, bbox[2], bbox[3]]  # x,y,w,h
+                gt_bbox_ = [gt_bbox[0] - gt_bbox[2] / 2, gt_bbox[1] - gt_bbox[3] / 2, gt_bbox[2], gt_bbox[3]]
+                pred_bboxes.append(bbox_)
             else:
                 track_result = tracker.track(frame)
                 bbox = track_result['bbox']  # cx,cy,w,h
@@ -103,15 +108,14 @@ def ope_evaluate(dataset, tracker):
 
             toc += cv2.getTickCount()-tic
             runtime.append((cv2.getTickCount()-tic)/cv2.getTickFrequency())
-            if args.vis and idx > 0:
+            if args.vis and idx>0:
                 show_double_bbox(frame, bbox, gt_bbox, idx, 0)
         toc /= cv2.getTickFrequency()
-        result_dir = os.path.join(cfg.TRACK.RESULT_DIR, args.dataset, tracker_name,
-                                  backbone_name, snapshot_name, video.name)
+        result_dir = os.path.join(cfg.TRACK.RESULT_DIR, args.dataset, tracker_name, backbone_name, snapshot_name,video.name)
         if not os.path.isdir(result_dir):
             os.makedirs(result_dir)
         result_path = '{}/{}_001.txt'.format(result_dir, video.name)
-        runtime_path = '{}/{}_time.txt'.format(result_dir, video.name)
+        runtime_path = '{}/{}_time.txt'.format(result_dir,video.name)
         # write result
         with open(result_path, 'w') as f:
             for x in pred_bboxes:
@@ -125,10 +129,10 @@ def ope_evaluate(dataset, tracker):
                 f.write('{:.6f}\n'.format(time))
 
         # log
-        print('[{:d}/{:d}] video: {}, time: {:.1f}s, speed: {:.1f}fps'.format(v_idx + 1,
-                                                                              len(dataset),
-                                                                              video.name,
-                                                                              toc, idx / toc))
+        print('[{:d}/{:d}] video: {}, time: {:.1f}s, speed: {:.1f}fps'.format(v_idx +1, 
+                                                                            len(dataset), 
+                                                                            video.name, 
+                                                                            toc, idx / toc))
 
 
 def main():
@@ -149,9 +153,9 @@ def main():
     data_dir = os.path.join(cfg.TRACK.DATA_DIR, args.dataset)
     dataset = get_dataset(args.dataset, data_dir)
     if args.dataset in ['VOT2016', 'VOT2018']:
-        vot_evaluate(dataset, tracker)
+        vot_evaluate(dataset,tracker)
     elif args.dataset == 'GOT-10k':
-        ope_evaluate(dataset, tracker)
+        ope_evaluate(dataset,tracker)
 
 
 if __name__ == '__main__':
