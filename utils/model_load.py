@@ -55,7 +55,7 @@ def meta_load(load_pretrain):
         return model
     return wrapper
 
-@meta_load
+#@meta_load
 def load_pretrain(model, pretrained_path):
     logger.info('load pretrained model from {}'.format(pretrained_path))
     device = torch.cuda.current_device()

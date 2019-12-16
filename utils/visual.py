@@ -20,8 +20,10 @@ def show_double_bbox(img, pred_bbox, gt_bbox,idx,lost_number):
     cv2.rectangle(img, (gt_bbox[0], gt_bbox[1]), (gt_bbox[2], gt_bbox[3]), (255, 255, 0), 2)
     cv2.putText(img, str(idx), (40, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
     cv2.putText(img, str(lost_number), (40, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+    cv2.namedWindow('double bbox',cv2.WINDOW_NORMAL| cv2.WINDOW_KEEPRATIO)
+    cv2.resizeWindow('double bbox',600,400)
     cv2.imshow('double bbox', img)
-    cv2.waitKey(1)
+    cv2.waitKey(100)
 
 
 def show_single_bbox(img, bbox):
@@ -39,13 +41,13 @@ def show_img(img):
     cv2.waitKey(1)
 
 
-def show_bboxes(img,bboxes):
-    for bbox in bboxes:
-        if isinstance(bbox,np.ndarray):
-            bbox=bbox.tolist()
-        pred_bbox = center2corner(bbox)
-        pred_bbox = list(map(lambda x: int(x), pred_bbox))
-        cv2.rectangle(img, (pred_bbox[0], pred_bbox[1]), (pred_bbox[2], pred_bbox[3]), (0, 0, 255), 2)
-    # cv2.namedWindow('single bbox', cv2.WINDOW_AUTOSIZE)
-    cv2.imshow('bboxes', img)
-    cv2.waitKey(1)
+#def show_bboxes(img,bboxes):
+#    for bbox in bboxes:
+#        if isinstance(bbox,np.ndarray):
+#            bbox=bbox.tolist()
+#        pred_bbox = center2corner(bbox)
+#        pred_bbox = list(map(lambda x: int(x), pred_bbox))
+#        cv2.rectangle(img, (pred_bbox[0], pred_bbox[1]), (pred_bbox[2], pred_bbox[3]), (0, 0, 255), 2)
+#    # cv2.namedWindow('single bbox', cv2.WINDOW_AUTOSIZE)
+#    cv2.imshow('bboxes', img)
+#    cv2.waitKey(1)

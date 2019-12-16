@@ -56,6 +56,7 @@ def train(dataloader, optimizer, model):
             gt_delta = data['gt_delta'].cuda()
             delta_weight = data['gt_delta_weight'].cuda()
             data_time = time.time()-begin_time
+            # now the batch size only surport one, get the only image
             examplar_imgs = examplar_imgs[0]
 
             losses = model.forward(examplar_imgs, search_img, gt_cls, gt_delta, delta_weight)

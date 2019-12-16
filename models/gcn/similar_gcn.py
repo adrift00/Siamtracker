@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class SimilarGCN(nn.Module):
@@ -7,6 +8,8 @@ class SimilarGCN(nn.Module):
         super(SimilarGCN, self).__init__()
         self.conv_g = nn.Conv2d(input_channels, 8, 1, 1)
         self.conv_h = nn.Conv2d(input_channels, 8, 1, 1)
+        self.conv_g2=nn.Conv2d(8,1,1,1)
+        self.conv_h2=nn.Conv2d(8,1,1,1)
         self.linear1 = nn.Linear(input_channels, hidden_channels)
         self.linear2 = nn.Linear(hidden_channels, output_channels)
 
@@ -14,14 +17,17 @@ class SimilarGCN(nn.Module):
         N, C, H, W = x.size()
         nodes_embed1 = self.conv_g(x)
         nodes_embed2 = self.conv_h(x)
-        nodes_embed1 = nodes_embed1.permute(0, 2, 3, 1).contiguous().view(N*H*W, -1)
-        nodes_embed2 = nodes_embed2.permute(0, 2, 3, 1).contiguous().view(N*H*W, -1)
-        adjacency = nodes_embed1.mm(nodes_embed2.t())
+        nodes_embed1=self.conv_g2(nodes_embed1).permute(0, 2, 3, 1).contiguous().view(N*H*W, -1)
+        nodes_embed2=self.conv_h2(nodes_embed2).permute(0, 2, 3, 1).contiguous().view(N*H*W, -1)
+        adjacency=nodes_embed1+nodes_embed2.t()
+        #import ipdb;ipdb.set_trace()
+        #adjacency = nodes_embed1.mm(nodes_embed2.t())
+        adjacency=F.relu(adjacency)
+        adjacency = F.softmax(adjacency, dim=1)
         adjacency = adjacency+torch.eye(adjacency.size(0)).cuda()
-        adjacency = torch.softmax(adjacency, dim=1)
         degree = torch.diag(adjacency.sum(dim=1))
-        degree = degree+1e-7  # avoid nan
         neg_half_deg = torch.pow(degree, -0.5)
+        neg_half_deg[torch.isinf(neg_half_deg)]=0  # avoid div by 0
         weight = neg_half_deg.mm(adjacency).mm(neg_half_deg)
         nodes = x.permute(0, 2, 3, 1).contiguous().view(-1, C)
         hidden = self.linear1(weight.mm(nodes))

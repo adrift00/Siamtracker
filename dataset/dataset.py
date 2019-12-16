@@ -9,6 +9,7 @@ from utils.bbox import center2corner, Center
 from utils.anchor import AnchorTarget
 from dataset.augmentation import Augmentation
 
+
 logger = logging.getLogger('global')
 
 
@@ -361,11 +362,13 @@ class GraphDataset(MetaDataset):
         right = max(left + 1, len(frames) - 1)
         search_range = frames[left:right]
         search_frame = np.random.choice(search_range)
+
         #examplars
         examplar_frames = ['{:06d}'.format(examplar_frame) for examplar_frame in examplar_frames]
         examplar_paths = [os.path.join(self.data_dir, video, self.filename_format.format(examplar_frame, trackid, 'x'))
                        for examplar_frame in examplar_frames]
         examplar_annos = [self.annos[video][trackid][examplar_frame] for examplar_frame in examplar_frames]
+
         #search
         search_frame = '{:06d}'.format(search_frame) 
         search_path = os.path.join(self.data_dir, video, self.filename_format.format(search_frame, trackid, 'x'))

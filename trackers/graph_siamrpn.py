@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from utils.bbox import delta2bbox, corner2center, Corner, Center
-from utils.visual import show_single_bbox
+from utils.visual import show_img
 from utils.anchor import AnchorGenerator
 from trackers.base_tracker import BaseTracker
 from configs.config import cfg
