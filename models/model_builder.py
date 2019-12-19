@@ -197,7 +197,6 @@ class GraphSiamModel(BaseSiamModel):
         if cfg.ADJUST.USE:
             search = self.adjust(search)
         examplar = self.examplar
-        #import ipdb;ipdb.set_trace()
         pred_cls, pred_loc = self.rpn(examplar, search)
         return pred_cls, pred_loc
 
