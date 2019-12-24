@@ -2,12 +2,13 @@ import cv2
 import numpy as np
 import torch
 import torch.nn.functional as F
+from torchvision.utils import make_grid,save_image
 from utils.bbox import delta2bbox, corner2center
-from utils.visual import show_single_bbox,show_img
+from utils.visual import show_single_bbox
 from utils.anchor import AnchorGenerator
 from trackers.base_tracker import BaseTracker
 from configs.config import cfg
-
+from matplotlib import pyplot as plt
 
 class SiamRPN(BaseTracker):
     def __init__(self, model):
@@ -41,11 +42,10 @@ class SiamRPN(BaseTracker):
         scale_z = cfg.TRACK.EXAMPLAR_SIZE / size_z
         size_x=self._size_x(bbox_size)
         search = self.get_subwindow(img, self.bbox_pos, cfg.TRACK.INSTANCE_SIZE, size_x, self.channel_average)
-        # debug use
-        # show_img(search)
         new_search = torch.from_numpy(search[np.newaxis, :].astype(np.float32)).permute(0, 3, 1, 2).cuda()
         cls, loc = self.model.track(new_search)
         score = self._convert_score(cls)
+
         loc = loc.reshape(4, self.anchor_generator.anchor_num, loc.size()[2], loc.size()[3])
         pred_bbox = delta2bbox(self.all_anchor, loc)
         pred_bbox = pred_bbox.transpose((1, 2, 3, 0)).reshape((-1, 4))  # x1,y1,x2,y2
@@ -68,6 +68,7 @@ class SiamRPN(BaseTracker):
                  self.window * cfg.TRACK.WINDOW_INFLUENCE
         best_idx = np.argmax(pscore)
         best_bbox = pred_bbox[best_idx, :]
+        # show_single_bbox(search,best_bbox.tolist())
         best_bbox[0]-=cfg.TRACK.INSTANCE_SIZE//2 
         best_bbox[1]-=cfg.TRACK.INSTANCE_SIZE//2
         best_bbox = best_bbox / scale_z
@@ -83,6 +84,6 @@ class SiamRPN(BaseTracker):
 
         return {
             'bbox': pred_bbox,
-            'best_score': score[best_idx]
+            'score': score[best_idx]
         }
-
+        

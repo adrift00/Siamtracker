@@ -8,11 +8,12 @@ from models.backbone import get_backbone
 from models.head import get_rpn_head
 from models.neck import get_neck
 from utils.loss import select_cross_entropy_loss, weight_l1_loss
+from models.gcn.similar_gcn import SimilarGCN
 
 
-class ModelBuilder(nn.Module):
+class BaseSiamModel(nn.Module):
     def __init__(self):
-        super(ModelBuilder, self).__init__()
+        super(BaseSiamModel, self).__init__()
         self.backbone = get_backbone(cfg.BACKBONE.TYPE, **cfg.BACKBONE.KWARGS)
         if cfg.ADJUST.USE:
             self.adjust = get_neck(cfg.ADJUST.TYPE, **cfg.ADJUST.KWARGS)
@@ -40,9 +41,6 @@ class ModelBuilder(nn.Module):
     def set_examplar(self, examplar):
         self.examplar = self.backbone(examplar)
 
-    def set_examplar_with_update(self, examplar):
-        self.examplar = self.backbone(examplar).detach()
-        self.examplar.requires_grad = True
 
     def track(self, search):
         search = self.backbone(search)
@@ -60,37 +58,14 @@ class ModelBuilder(nn.Module):
         cls = F.log_softmax(cls, dim=4)
         return cls
 
-    def update_forward(self, search, gt_cls, gt_loc, gt_loc_weight):
-        """
-        update the exampar online
-        :param examplar: the examplar after backbone
-        :param search:
-        :param gt_cls:
-        :param gt_loc:
-        :param gt_loc_weight:
-        :return:
-        """
-        self.eval()
 
-        search = self.backbone(search)
-        examplar = self.examplar
-        if cfg.ADJUST.USE:
-            examplar = self.adjust(examplar)
-            search = self.adjust(search)
-        pred_cls, pred_loc = self.rpn(examplar, search)
-        pred_cls = self.log_softmax(pred_cls)
-        cls_loss = select_cross_entropy_loss(pred_cls, gt_cls)
-        loc_loss = weight_l1_loss(pred_loc, gt_loc, gt_loc_weight)
-        total_loss = cfg.TRAIN.CLS_WEIGHT * cls_loss + cfg.TRAIN.LOC_WEIGHT * loc_loss
-        return total_loss
-    # for meta learning
+class MetaSiamModel(BaseSiamModel):
     # meta track
-
-    def meta_set_examplar(self, examplars, searches, gt_cls, gt_loc, gt_loc_weight):
+    def set_examplar(self, examplars, searches, gt_cls, gt_loc, gt_loc_weight):
         self.examplar = self.backbone(examplars[0][None, ...])
         self.weight = self.meta_train(examplars, searches, gt_cls, gt_loc, gt_loc_weight)
 
-    def meta_track(self, search):
+    def track(self, search):
         search = self.backbone(search)
         examplar = self.examplar
         if cfg.ADJUST.USE:
@@ -152,8 +127,7 @@ class ModelBuilder(nn.Module):
         if cfg.ADJUST.USE:
             examplar = self.adjust(examplar)
             search = self.adjust(search)
-        pred_cls, pred_loc = self.rpn(
-            examplar, search, new_init_weight, self.bn_weight)
+        pred_cls, pred_loc = self.rpn(examplar, search, new_init_weight, self.bn_weight)
         pred_cls = self.log_softmax(pred_cls)
         cls_loss = select_cross_entropy_loss(pred_cls, gt_cls)
         loc_loss = weight_l1_loss(pred_loc, gt_loc, gt_loc_weight)
@@ -186,3 +160,50 @@ class ModelBuilder(nn.Module):
             if k.split('.')[-1].startswith('running'):  # skip bn mean and var
                 continue
             v.data.copy_(self.init_weight[k])
+
+class GraphSiamModel(BaseSiamModel):
+    def __init__(self):
+        super(GraphSiamModel, self).__init__()
+        self.gcn = SimilarGCN(**cfg.GRAPH.KWARGS)
+
+    def set_examplar(self, examplars):
+        examplars = self.backbone(examplars)
+        if cfg.ADJUST.USE:
+            examplars = self.adjust(examplars)
+        self.examplar = self.gcn(examplars)
+
+    def forward(self, examplars, search, gt_cls, gt_loc, gt_loc_weight):
+        examplars = self.backbone(examplars)
+        search = self.backbone(search)
+        if cfg.ADJUST.USE:
+            examplar = self.adjust(examplar)
+            search = self.adjust(search)
+
+        examplar = self.gcn(examplars)
+        pred_cls, pred_loc = self.rpn(examplar, search)
+        pred_cls = self.log_softmax(pred_cls)
+        cls_loss = select_cross_entropy_loss(pred_cls, gt_cls)
+        loc_loss = weight_l1_loss(pred_loc, gt_loc, gt_loc_weight)
+        total_loss = cfg.TRAIN.CLS_WEIGHT * cls_loss + cfg.TRAIN.LOC_WEIGHT * loc_loss
+        return {
+            'cls_loss': cls_loss,
+            'loc_loss': loc_loss,
+            'total_loss': total_loss
+        }
+
+    def track(self, search):
+        search = self.backbone(search)
+        if cfg.ADJUST.USE:
+            search = self.adjust(search)
+        examplar = self.examplar
+        pred_cls, pred_loc = self.rpn(examplar, search)
+        return pred_cls, pred_loc
+
+
+models = {'BaseSiamModel': BaseSiamModel,
+          'MetaSiamModel': MetaSiamModel,
+          'GraphSiamModel': GraphSiamModel}
+
+
+def get_model(model_name, **kwargs):
+    return models[model_name](**kwargs)

@@ -123,8 +123,7 @@ cfg.TRAIN.LR_WARMUP.KWARGS.step = 1
 # track
 cfg.TRACK = CfgNode()
 cfg.TRACK.TYPE='SiamRPNTracker'
-cfg.TRACK.DATA_DIR = '../pysot/testing_dataset/VOT2016'  
-cfg.TRACK.ANNO_FILE = 'VOT2016.json'
+cfg.TRACK.DATA_DIR = '../pysot/testing_dataset/'  
 cfg.TRACK.RESULT_DIR='./result'
 cfg.TRACK.EXAMPLAR_SIZE = 127
 cfg.TRACK.INSTANCE_SIZE = 287
@@ -133,17 +132,7 @@ cfg.TRACK.PENALTY_K = 0.16
 cfg.TRACK.WINDOW_INFLUENCE = 0.40
 cfg.TRACK.LR = 0.3
 
-
-
-
-#update
-cfg.UPDATE=CfgNode()
-cfg.UPDATE.NUM_SAMPLES=30
-cfg.UPDATE.INIT_ITER=20
-cfg.UPDATE.TRACK_ITER=2
-cfg.UPDATE.UPDATE_FREQ=10
-
-#meta training
+#meta adapt
 cfg.META=CfgNode()
 cfg.META.VID = CfgNode()
 cfg.META.VID.DATA_DIR = '../pysot/training_dataset/vid/crop511'
@@ -151,10 +140,11 @@ cfg.META.VID.ANNO_FILE = '../pysot/training_dataset/vid/train.json'
 cfg.META.VID.FRAME_RANGE = 100
 cfg.META.VID.NUM_USE = 100000
 
-cfg.META.LR=0.0001
-cfg.META.INIT_ALPHA=0.0001
+cfg.META.LR=0.00001
+cfg.META.INIT_ALPHA=0.00001
+cfg.META.WEIGHT_DECAY=0.00005
 cfg.META.BATCH_SIZE=128
-cfg.META.TRAIN_EPOCH=5
+cfg.META.TRAIN_EPOCH=10
 cfg.META.PRETRAIN_PATH='./snapshot/alexnet/checkpoint_e46.pth'
 
 cfg.META.SNAPSHOT_DIR='./snapshot/meta'
@@ -163,5 +153,28 @@ cfg.META.LOG_DIR='./logs/alexnet_meta'
 cfg.META.TRAIN_SIZE=10
 cfg.META.TEST_SIZE=5
 cfg.META.MEMORY_SIZE=10
-cfg.META.UPDATE_THRESH=0.8
+cfg.META.UPDATE_THRESH=0.9
 cfg.META.UPDATE_FREQ=20
+
+#graph 
+cfg.GRAPH=CfgNode()
+
+cfg.GRAPH.EXAMPLAR_SIZE=10
+cfg.GRAPH.UPDATE_FREQ=5
+
+cfg.GRAPH.BATCH_SIZE=1 # now only support 1 
+cfg.GRAPH.EPOCHS=50
+cfg.GRAPH.LR=0.0005
+cfg.GRAPH.WEIGHT_DECAY=0.0001
+cfg.GRAPH.PRETRAIN_PATH='./snapshot/alexnet/checkpoint_e46.pth'
+
+cfg.GRAPH.SNAPSHOT_DIR='./snapshot/graph'
+cfg.GRAPH.LOG_DIR='./logs/alexnet_graph'
+
+cfg.GRAPH.KWARGS=CfgNode(new_allowed=True)
+cfg.GRAPH.KWARGS.input_channels=256
+cfg.GRAPH.KWARGS.output_channels=256
+
+
+
+
