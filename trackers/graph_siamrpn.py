@@ -107,5 +107,5 @@ class GraphSiamRPN(BaseTracker):
 
         return {
             'bbox': pred_bbox,
-            'best_score': score[best_idx]
+            'score': score[best_idx]
         }

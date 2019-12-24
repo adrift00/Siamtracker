@@ -140,10 +140,11 @@ cfg.META.VID.ANNO_FILE = '../pysot/training_dataset/vid/train.json'
 cfg.META.VID.FRAME_RANGE = 100
 cfg.META.VID.NUM_USE = 100000
 
-cfg.META.LR=0.0001
-cfg.META.INIT_ALPHA=0.0001
+cfg.META.LR=0.00001
+cfg.META.INIT_ALPHA=0.00001
+cfg.META.WEIGHT_DECAY=0.00005
 cfg.META.BATCH_SIZE=128
-cfg.META.TRAIN_EPOCH=5
+cfg.META.TRAIN_EPOCH=10
 cfg.META.PRETRAIN_PATH='./snapshot/alexnet/checkpoint_e46.pth'
 
 cfg.META.SNAPSHOT_DIR='./snapshot/meta'
@@ -152,7 +153,7 @@ cfg.META.LOG_DIR='./logs/alexnet_meta'
 cfg.META.TRAIN_SIZE=10
 cfg.META.TEST_SIZE=5
 cfg.META.MEMORY_SIZE=10
-cfg.META.UPDATE_THRESH=0.8
+cfg.META.UPDATE_THRESH=0.9
 cfg.META.UPDATE_FREQ=20
 
 #graph 

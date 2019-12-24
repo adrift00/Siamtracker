@@ -94,25 +94,25 @@ class MetaSiamRPN(BaseTracker):
         best_bbox = pred_bbox[best_idx, :]
         best_score = pscore[best_idx]
         # update memory
-        #if best_score > cfg.META.UPDATE_THRESH:
-        #    del_idx = np.argmin(self.score_mem)
-        #    del self.search_mem[del_idx]
-        #    del self.bbox_mem[del_idx]
-        #    del self.score_mem[del_idx]
-        #    self.search_mem.append(search)
-        #    self.bbox_mem.append(best_bbox.tolist())
-        #    self.score_mem.append(best_score)
-        ## update filter
-        #if self.track_frame % cfg.META.UPDATE_FREQ == 0:
-        #    gt_data = [self.anchor_target(bbox) for bbox in self.bbox_mem]
-        #    gt_cls, gt_loc, gt_loc_weight = zip(*gt_data)
-        #    gt_cls, gt_loc, gt_loc_weight = map(lambda
-        #                                        x: torch.from_numpy(np.stack(x)).cuda(),
-        #                                        [gt_cls, gt_loc, gt_loc_weight])
-        #    searches = torch.from_numpy(
-        #        np.stack(self.search_mem).astype(np.float32).transpose((0, 3, 1, 2))).cuda()
+        if best_score > cfg.META.UPDATE_THRESH:
+           del_idx = np.argmin(self.score_mem)
+           del self.search_mem[del_idx]
+           del self.bbox_mem[del_idx]
+           del self.score_mem[del_idx]
+           self.search_mem.append(search)
+           self.bbox_mem.append(best_bbox.tolist())
+           self.score_mem.append(best_score)
+        # update filter
+        if self.track_frame % cfg.META.UPDATE_FREQ == 0:
+           gt_data = [self.anchor_target(bbox) for bbox in self.bbox_mem]
+           gt_cls, gt_loc, gt_loc_weight = zip(*gt_data)
+           gt_cls, gt_loc, gt_loc_weight = map(lambda
+                                               x: torch.from_numpy(np.stack(x)).cuda(),
+                                               [gt_cls, gt_loc, gt_loc_weight])
+           searches = torch.from_numpy(
+               np.stack(self.search_mem).astype(np.float32).transpose((0, 3, 1, 2))).cuda()
 
-        #    self.model.meta_train(self.examplars, searches, gt_cls, gt_loc, gt_loc_weight)
+           self.model.meta_train(self.examplars, searches, gt_cls, gt_loc, gt_loc_weight)
         # update track state
         best_bbox[0]-=cfg.TRACK.INSTANCE_SIZE//2 
         best_bbox[1]-=cfg.TRACK.INSTANCE_SIZE//2
@@ -129,5 +129,5 @@ class MetaSiamRPN(BaseTracker):
 
         return {
             'bbox': pred_bbox,
-            'best_score': score[best_idx]
+            'score': score[best_idx]
         }

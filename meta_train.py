@@ -1,4 +1,5 @@
-import os import time
+import os 
+import time
 import logging
 import json
 import argparse
@@ -10,10 +11,9 @@ from torch.optim import Adam
 from dataset.dataset import MetaDataset
 from configs.config import cfg
 from utils.model_load import load_pretrain
-from models.model_builder import ModelBuilder
+from models.model_builder import MetaSiamModel
 from utils.log_helper import init_log, add_file_handler
 from utils.misc import commit, describe
-from trackers.siamrpn_with_update import SiamRPNWithUpdate
 
 logger = logging.getLogger("global")
 parser = argparse.ArgumentParser()
@@ -22,7 +22,7 @@ args = parser.parse_args()
 
 
 def build_dataloader():
-    logger.info("building datalaoder!")
+    logger.info("building dataloader!")
     meta_dataset = MetaDataset()
     meta_dataloader = DataLoader(
         meta_dataset, batch_size=cfg.META.BATCH_SIZE, shuffle=False
@@ -36,7 +36,7 @@ def build_optimizer(model):
         {"params": model.init_weight.values(), "lr": cfg.META.LR},  # TODO: may be can be optimized
         {"params": model.alpha.values(), "lr": cfg.META.LR},
     ]
-    optimizer = Adam(parameters, lr=cfg.META.LR)
+    optimizer = Adam(parameters,weight_decay=cfg.META.WEIGHT_DECAY)
     return optimizer
 
 
@@ -126,7 +126,7 @@ def main():
         )
     logger.info("Version Information: \n{}\n".format(commit()))
     logger.info("config \n{}".format(json.dumps(cfg, indent=4)))
-    model = ModelBuilder().cuda()
+    model = MetaSiamModel().cuda()
     model = load_pretrain(model, cfg.META.PRETRAIN_PATH)
     # init meta train
     model.meta_train_init()

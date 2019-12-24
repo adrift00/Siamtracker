@@ -127,8 +127,7 @@ class MetaSiamModel(BaseSiamModel):
         if cfg.ADJUST.USE:
             examplar = self.adjust(examplar)
             search = self.adjust(search)
-        pred_cls, pred_loc = self.rpn(
-            examplar, search, new_init_weight, self.bn_weight)
+        pred_cls, pred_loc = self.rpn(examplar, search, new_init_weight, self.bn_weight)
         pred_cls = self.log_softmax(pred_cls)
         cls_loss = select_cross_entropy_loss(pred_cls, gt_cls)
         loc_loss = weight_l1_loss(pred_loc, gt_loc, gt_loc_weight)
@@ -164,14 +163,14 @@ class MetaSiamModel(BaseSiamModel):
 
 class GraphSiamModel(BaseSiamModel):
     def __init__(self):
-        super(GraphSiamModel,self).__init__()
-        self.gcn=SimilarGCN(**cfg.GRAPH.KWARGS)
+        super(GraphSiamModel, self).__init__()
+        self.gcn = SimilarGCN(**cfg.GRAPH.KWARGS)
 
-    def set_examplar(self,examplars):
+    def set_examplar(self, examplars):
         examplars = self.backbone(examplars)
         if cfg.ADJUST.USE:
-            examplars=self.adjust(examplars)
-        self.examplar=self.gcn(examplars)
+            examplars = self.adjust(examplars)
+        self.examplar = self.gcn(examplars)
 
     def forward(self, examplars, search, gt_cls, gt_loc, gt_loc_weight):
         examplars = self.backbone(examplars)
@@ -180,7 +179,7 @@ class GraphSiamModel(BaseSiamModel):
             examplar = self.adjust(examplar)
             search = self.adjust(search)
 
-        examplar=self.gcn(examplars)
+        examplar = self.gcn(examplars)
         pred_cls, pred_loc = self.rpn(examplar, search)
         pred_cls = self.log_softmax(pred_cls)
         cls_loss = select_cross_entropy_loss(pred_cls, gt_cls)
@@ -201,11 +200,10 @@ class GraphSiamModel(BaseSiamModel):
         return pred_cls, pred_loc
 
 
+models = {'BaseSiamModel': BaseSiamModel,
+          'MetaSiamModel': MetaSiamModel,
+          'GraphSiamModel': GraphSiamModel}
 
 
-models={'BaseSiamModel':BaseSiamModel,
-        'MetaSiamModel':MetaSiamModel,
-        'GraphSiamModel':GraphSiamModel}
-
-def get_model(model_name,**kwargs):
+def get_model(model_name, **kwargs):
     return models[model_name](**kwargs)

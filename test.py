@@ -96,12 +96,14 @@ def ope_evaluate(dataset, tracker):
                 tracker.init(frame, gt_bbox)  # cx,cy,w,h
                 track_result = tracker.track(frame)
                 bbox = track_result['bbox']  # cx,cy,w,h
+                score=track_result['score']
                 bbox_ = [bbox[0] - bbox[2] / 2, bbox[1] - bbox[3] / 2, bbox[2], bbox[3]]  # x,y,w,h
                 gt_bbox_ = [gt_bbox[0] - gt_bbox[2] / 2, gt_bbox[1] - gt_bbox[3] / 2, gt_bbox[2], gt_bbox[3]]
                 pred_bboxes.append(bbox_)
             else:
                 track_result = tracker.track(frame)
                 bbox = track_result['bbox']  # cx,cy,w,h
+                score=track_result['score']
                 bbox_ = [bbox[0] - bbox[2] / 2, bbox[1] - bbox[3] / 2, bbox[2], bbox[3]]  # x,y,w,h
                 gt_bbox_ = [gt_bbox[0] - gt_bbox[2] / 2, gt_bbox[1] - gt_bbox[3] / 2, gt_bbox[2], gt_bbox[3]]
                 pred_bboxes.append(bbox_)
@@ -109,7 +111,7 @@ def ope_evaluate(dataset, tracker):
             toc += cv2.getTickCount()-tic
             runtime.append((cv2.getTickCount()-tic)/cv2.getTickFrequency())
             if args.vis and idx>0:
-                show_double_bbox(frame, bbox, gt_bbox, idx, 0)
+                show_double_bbox(frame, bbox,score, gt_bbox, idx, 0)
         toc /= cv2.getTickFrequency()
         result_dir = os.path.join(cfg.TRACK.RESULT_DIR, args.dataset, tracker_name, backbone_name, snapshot_name,video.name)
         if not os.path.isdir(result_dir):

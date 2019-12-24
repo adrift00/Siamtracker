@@ -257,9 +257,9 @@ class MetaDataset(SubDataset):
         test_imgs, test_bboxes = zip(*test_set)
         test_imgs, test_bboxes = list(test_imgs), list(test_bboxes)
 
-        train_examplar_imgs, test_examplar_imgs = map(
-            lambda x: np.tile(x.transpose((2, 0, 1)).astype(np.float32), (len(train_imgs), 1, 1, 1)),
-            [examplar_img, examplar_img])
+        train_examplar_imgs = np.tile(examplar_img.transpose((2, 0, 1)).astype(np.float32), (len(train_imgs), 1, 1, 1))
+        test_examplar_imgs = np.tile(examplar_img.transpose((2, 0, 1)).astype(np.float32), (len(test_imgs), 1, 1, 1))
+
         train_imgs, test_imgs = map(
             lambda x: np.stack(x, axis=0).transpose((0, 3, 1, 2)).astype(np.float32),
             [train_imgs, test_imgs])
@@ -311,19 +311,19 @@ class MetaDataset(SubDataset):
         test_annos = [self.annos[video][trackid][test_frame] for test_frame in test_frames]
         return (examplar_path, examplar_anno), (train_paths, train_annos), (test_paths, test_annos)
 
-        def get_bbox(self, image, ori_bbox):
-            img_h, img_w = image.shape[:2]
-            w, h = ori_bbox[2] - ori_bbox[0], ori_bbox[3] - ori_bbox[1]
-            context_amount = 0.5
-            wc_z = w + context_amount * (w + h)
-            hc_z = h + context_amount * (w + h)
-            s_z = np.sqrt(wc_z * hc_z)
-            scale_z = cfg.TRAIN.EXAMPLER_SIZE / s_z
-            w = w * scale_z
-            h = h * scale_z
-            cx, cy = img_w // 2, img_h // 2
-            bbox = center2corner(Center(cx, cy, w, h))
-            return bbox
+    def get_bbox(self, image, ori_bbox):
+        img_h, img_w = image.shape[:2]
+        w, h = ori_bbox[2] - ori_bbox[0], ori_bbox[3] - ori_bbox[1]
+        context_amount = 0.5
+        wc_z = w + context_amount * (w + h)
+        hc_z = h + context_amount * (w + h)
+        s_z = np.sqrt(wc_z * hc_z)
+        scale_z = cfg.TRAIN.EXAMPLER_SIZE / s_z
+        w = w * scale_z
+        h = h * scale_z
+        cx, cy = img_w // 2, img_h // 2
+        bbox = center2corner(Center(cx, cy, w, h))
+        return bbox
 
 class GraphDataset(MetaDataset):
 
