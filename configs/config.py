@@ -144,7 +144,7 @@ cfg.META.LR=0.00001
 cfg.META.INIT_ALPHA=0.00001
 cfg.META.WEIGHT_DECAY=0.00005
 cfg.META.BATCH_SIZE=128
-cfg.META.TRAIN_EPOCH=10
+cfg.META.TRAIN_EPOCH=50
 cfg.META.PRETRAIN_PATH='./snapshot/alexnet/checkpoint_e46.pth'
 
 cfg.META.SNAPSHOT_DIR='./snapshot/meta'
