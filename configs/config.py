@@ -61,7 +61,7 @@ cfg.BACKBONE.KWARGS = CfgNode(new_allowed=True)
 cfg.BACKBONE.KWARGS.width_mult = 1.0
 
 cfg.ADJUST = CfgNode()
-cfg.ADJUST.USE = True
+cfg.ADJUST.USE = False
 cfg.ADJUST.TYPE = "AdjustAllLayer"
 cfg.ADJUST.KWARGS = CfgNode(new_allowed=True)
 
