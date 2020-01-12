@@ -146,7 +146,6 @@ class DepthwiseXCorr(nn.Module):
         out = self.head(feature)
         return out
 
-
 def xcorr_depthwise(x, kernel):
     """depthwise cross correlation
     """
@@ -157,3 +156,8 @@ def xcorr_depthwise(x, kernel):
     out = F.conv2d(x, kernel, groups=batch*channel)
     out = out.view(batch, channel, out.size(2), out.size(3))
     return out
+
+
+
+
+

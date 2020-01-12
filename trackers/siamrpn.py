@@ -1,14 +1,10 @@
 import cv2
 import numpy as np
 import torch
-import torch.nn.functional as F
-from torchvision.utils import make_grid,save_image
 from utils.bbox import delta2bbox, corner2center
-from utils.visual import show_single_bbox
 from utils.anchor import AnchorGenerator
 from trackers.base_tracker import BaseTracker
 from configs.config import cfg
-from matplotlib import pyplot as plt
 
 class SiamRPN(BaseTracker):
     def __init__(self, model):

@@ -10,7 +10,7 @@ snapshot/
 train_dataset/coco/
 !train_dataset/coco/pycocotools/
 !train_dataset/coco/*py
-
+hp_search_result/
 
 
 ### Python ###

@@ -14,7 +14,7 @@ ADJUST:
     USE: True
     TYPE: "AdjustAllLayer"
     KWARGS:
-        in_channels: [48, 136, 448] #because use width_mult=1.0
+        in_channels: [48, 136, 448] #because use width_mult=1.4, and make divible
         out_channels: [256, 256, 256]
 
 RPN:
