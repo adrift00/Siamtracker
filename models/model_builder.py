@@ -16,55 +16,55 @@ class BaseSiamModel(nn.Module):
         super(BaseSiamModel, self).__init__()
         self.backbone = get_backbone(cfg.BACKBONE.TYPE, **cfg.BACKBONE.KWARGS)
         if cfg.ADJUST.USE:
-            self.adjust = get_neck(cfg.ADJUST.TYPE, **cfg.ADJUST.KWARGS)
+            self.neck = get_neck(cfg.ADJUST.TYPE, **cfg.ADJUST.KWARGS)
 
         self.rpn = get_rpn_head(cfg.RPN.TYPE, **cfg.RPN.KWARGS)
 
-    # def forward(self, examplar, search, gt_cls, gt_loc, gt_loc_weight):
-    #     examplar = self.backbone(examplar)
-    #     search = self.backbone(search)
-    #     if cfg.ADJUST.USE:
-    #         examplar = self.adjust(examplar)
-    #         search = self.adjust(search)
-    #     pred_cls, pred_loc = self.rpn(examplar, search)
-    #     pred_cls = self.log_softmax(pred_cls)
-    #     cls_loss = select_cross_entropy_loss(pred_cls, gt_cls)
-    #     loc_loss = weight_l1_loss(pred_loc, gt_loc, gt_loc_weight)
-    #     total_loss = cfg.TRAIN.CLS_WEIGHT * cls_loss + cfg.TRAIN.LOC_WEIGHT * loc_loss
-    #     return {
-    #         'cls_loss': cls_loss,
-    #         'loc_loss': loc_loss,
-    #         'total_loss': total_loss
-    #     }
-    #
-    # def track(self, search):
-    #     search = self.backbone(search)
-    #     examplar = self.examplar
-    #     if cfg.ADJUST.USE:
-    #         examplar = self.adjust(self.examplar)
-    #         search = self.adjust(search)
-    #     pred_cls, pred_loc = self.rpn(examplar, search)
-    #     return pred_cls, pred_loc
+    def forward(self, examplar, search, gt_cls, gt_loc, gt_loc_weight):
+        examplar = self.backbone(examplar)
+        search = self.backbone(search)
+        if cfg.ADJUST.USE:
+            examplar = self.neck(examplar)
+            search = self.neck(search)
+        pred_cls, pred_loc = self.rpn(examplar, search)
+        pred_cls = self.log_softmax(pred_cls)
+        cls_loss = select_cross_entropy_loss(pred_cls, gt_cls)
+        loc_loss = weight_l1_loss(pred_loc, gt_loc, gt_loc_weight)
+        total_loss = cfg.TRAIN.CLS_WEIGHT * cls_loss + cfg.TRAIN.LOC_WEIGHT * loc_loss
+        return {
+            'cls_loss': cls_loss,
+            'loc_loss': loc_loss,
+            'total_loss': total_loss
+        }
 
-    # def set_examplar(self, examplar):
-    #     self.examplar = self.backbone(examplar)
+    def track(self, search):
+        search = self.backbone(search)
+        examplar = self.examplar
+        if cfg.ADJUST.USE:
+            examplar = self.neck(examplar)
+            search = self.neck(search)
+        pred_cls, pred_loc = self.rpn(examplar, search)
+        return pred_cls, pred_loc
+
+    def set_examplar(self, examplar):
+        self.examplar = self.backbone(examplar)
 
 
 
     # for model conveter
-    @torch.no_grad()
-    def set_examplar(self, examplar):
-        examplar = self.backbone(examplar)
-        return examplar
+    # @torch.no_grad()
+    # def forward(self, examplar):
+    #     examplar = self.backbone(examplar)
+    #     return examplar
 
-    @torch.no_grad()
-    def track(self, examplar, search):
-        search = self.backbone(search)
-        if cfg.ADJUST.USE:
-            examplar = self.adjust(examplar)
-            search = self.adjust(search)
-        pred_cls, pred_loc = self.rpn(examplar, search)
-        return pred_cls, pred_loc
+    # @torch.no_grad()
+    # def forward(self, examplar, search):
+    #     search = self.backbone(search)
+    #     if cfg.ADJUST.USE:
+    #         examplar = self.neck(examplar)
+    #         search = self.neck(search)
+    #     pred_cls, pred_loc = self.rpn(examplar, search)
+    #     return pred_cls, pred_loc
 
     def log_softmax(self, cls):
         b, a2, h, w = cls.size()
@@ -84,8 +84,8 @@ class MetaSiamModel(BaseSiamModel):
         search = self.backbone(search)
         examplar = self.examplar
         if cfg.ADJUST.USE:
-            examplar = self.adjust(self.examplar)
-            search = self.adjust(search)
+            examplar = self.neck(self.examplar)
+            search = self.neck(search)
         pred_cls, pred_loc = self.rpn(examplar, search, self.weight, self.bn_weight)
         return pred_cls, pred_loc
 
@@ -100,7 +100,7 @@ class MetaSiamModel(BaseSiamModel):
     def meta_train_init(self):
         self._fix_module(self.backbone)
         if cfg.ADJUST.USE:
-            self._fix_module(self.adjust)
+            self._fix_module(self.neck)
         self._fix_module(self.rpn)
         self.init_weight, self.bn_weight = self.get_rpn_state()
         self.alpha = OrderedDict()
@@ -113,8 +113,8 @@ class MetaSiamModel(BaseSiamModel):
         examplar = self.backbone(examplar)
         search = self.backbone(search)
         if cfg.ADJUST.USE:
-            examplar = self.adjust(examplar)
-            search = self.adjust(search)
+            examplar = self.neck(examplar)
+            search = self.neck(search)
         # first iter
         pred_cls, pred_loc = self.rpn(examplar, search, self.init_weight, self.bn_weight)
         pred_cls = self.log_softmax(pred_cls)
@@ -140,8 +140,8 @@ class MetaSiamModel(BaseSiamModel):
         examplar = self.backbone(examplar)
         search = self.backbone(search)
         if cfg.ADJUST.USE:
-            examplar = self.adjust(examplar)
-            search = self.adjust(search)
+            examplar = self.neck(examplar)
+            search = self.neck(search)
         pred_cls, pred_loc = self.rpn(examplar, search, new_init_weight, self.bn_weight)
         pred_cls = self.log_softmax(pred_cls)
         cls_loss = select_cross_entropy_loss(pred_cls, gt_cls)
@@ -184,15 +184,15 @@ class GraphSiamModel(BaseSiamModel):
     def set_examplar(self, examplars):
         examplars = self.backbone(examplars)
         if cfg.ADJUST.USE:
-            examplars = self.adjust(examplars)
+            examplars = self.neck(examplars)
         self.examplar = self.gcn(examplars)
 
     def forward(self, examplars, search, gt_cls, gt_loc, gt_loc_weight):
         examplars = self.backbone(examplars)
         search = self.backbone(search)
         if cfg.ADJUST.USE:
-            examplar = self.adjust(examplar)
-            search = self.adjust(search)
+            examplar = self.neck(examplars)
+            search = self.neck(search)
 
         examplar = self.gcn(examplars)
         pred_cls, pred_loc = self.rpn(examplar, search)
@@ -209,7 +209,7 @@ class GraphSiamModel(BaseSiamModel):
     def track(self, search):
         search = self.backbone(search)
         if cfg.ADJUST.USE:
-            search = self.adjust(search)
+            search = self.neck(search)
         examplar = self.examplar
         pred_cls, pred_loc = self.rpn(examplar, search)
         return pred_cls, pred_loc

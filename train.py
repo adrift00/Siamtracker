@@ -97,6 +97,11 @@ def build_optimizer_lr(model, current_epoch=0):
         {'params': filter(lambda x: x.requires_grad, model.backbone.parameters()),
          'lr': cfg.BACKBONE.LAYERS_LR * cfg.TRAIN.BASE_LR
          }]
+    if cfg.ADJUST.USE:
+        trainable_param+=[{
+            'params': model.neck.parameters(),
+            'lr':cfg.TRAIN.BASE_LR
+        }]
     trainable_param += [{
         'params': model.rpn.parameters(),
         'lr': cfg.TRAIN.BASE_LR

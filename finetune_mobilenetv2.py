@@ -55,10 +55,11 @@ def load_pretrain(model, pretrained_path):
     return model
 
 if __name__ =='__main__':
-    pretrained_path='../mobilenetv2.pytorch-master/snapshot/model_best.pth.tar'
+    pretrained_path='../mobilenetv2/snapshot/model_best.pth.tar'
     model=MobileNetV2(width_mult=1.4)
     model=load_pretrain(model,pretrained_path)
     save_path='./pretrained_models/mobilenetv2_1_4.pth'
+
 
     torch.save(model.state_dict(),save_path)
 

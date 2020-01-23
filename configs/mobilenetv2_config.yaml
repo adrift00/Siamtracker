@@ -21,7 +21,7 @@ RPN:
     TYPE: 'MultiRPN'
     KWARGS:
         in_channels: [256, 256, 256]
-        weighted: False
+        weighted: True
 
 ANCHOR:
     STRIDE: 8
@@ -34,15 +34,15 @@ TRACK:
     WINDOW_INFLUENCE: 0.4
     LR: 0.5
     EXAMPLAR_SIZE: 127
-    INSTANCE_SIZE: 255
-    BASE_SIZE: 8  #NOTE: because the template map is crop to 7x7, so the base_size is needed.
+    INSTANCE_SIZE: 287
+    BASE_SIZE: 8  # NOTE: because the template map is crop to 7x7, so the base_size is needed.
 
 TRAIN:
     EPOCHS: 50
-    START_EPOCH: 39
-    BATCH_SIZE: 46 
-    RESUME: True
-    RESUME_PATH: './snapshot/mobilenetv2/checkpoint_e46.pth'
+    START_EPOCH: 0
+    BATCH_SIZE: 36
+    RESUME: False
+    RESUME_PATH: ''
     PRETRAIN: False
     PRETRAIN_PATH: ''
     BACKBONE_PRETRAIN: True

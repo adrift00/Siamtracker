@@ -20,14 +20,16 @@ class SiamRPN_MNN(BaseTracker):
         window = np.outer(hanning, hanning)
         self.window = np.tile(window.flatten(), self.anchor_generator.anchor_num)
         self.all_anchor = self.anchor_generator.generate_all_anchors(cfg.TRACK.INSTANCE_SIZE // 2, self.score_size)
-        self.exam_inter = MNN.Interpreter("./pretrained_models/siamrpn_examplar_sim.mnn")
-        self.search_inter = MNN.Interpreter("./pretrained_models/siamrpn_search_sim.mnn")
-        self.exam_sess = self.exam_inter.createSession()
-        self.search_sess = self.search_inter.createSession()
-        self.exam_input = self.exam_inter.getSessionInput(self.exam_sess)
+
+        self.exam_interp = MNN.Interpreter("./pretrained_models/siamrpn_examplar_sim.mnn")
+        self.exam_sess = self.exam_interp.createSession()
+        self.exam_input = self.exam_interp.getSessionInput(self.exam_sess)
+
+        self.search_interp = MNN.Interpreter("./pretrained_models/siamrpn_search_sim.mnn")
+        self.search_sess = self.search_interp.createSession()
         self.search_input = []
-        self.search_input.append(self.search_inter.getSessionInput(self.search_sess, 'examplar'))
-        self.search_input.append(self.search_inter.getSessionInput(self.search_sess, 'search'))
+        self.search_input.append(self.search_interp.getSessionInput(self.search_sess, 'examplar'))
+        self.search_input.append(self.search_interp.getSessionInput(self.search_sess, 'search'))
 
     def init(self, img, bbox):
         bbox_pos = bbox[0:2]  # cx,cy
@@ -39,14 +41,14 @@ class SiamRPN_MNN(BaseTracker):
         examplar = examplar[np.newaxis, :]
         examplar_data = MNN.Tensor((1, 3, 127, 127), MNN.Halide_Type_Float, examplar, MNN.Tensor_DimensionType_Caffe)
         self.exam_input.copyFrom(examplar_data)
-        self.exam_inter.runSession(self.exam_sess)
-        self.examplar = self.exam_inter.getSessionOutput(self.exam_sess)  # the feature map of examplar
+        self.exam_interp.runSession(self.exam_sess)
+        self.examplar = self.exam_interp.getSessionOutput(self.exam_sess)  # the feature map of examplar
         out = np.zeros((1, 256, 6, 6))
         out_data = MNN.Tensor((1, 256, 6, 6), MNN.Halide_Type_Float, out, MNN.Tensor_DimensionType_Caffe)
         self.examplar.copyToHostTensor(out_data)
         self.search_input[0].copyFrom(out_data)
-        import ipdb;
-        ipdb.set_trace()
+        # import ipdb;
+        # ipdb.set_trace()
         self.bbox_pos = bbox_pos
         self.bbox_size = bbox_size
 
@@ -60,18 +62,17 @@ class SiamRPN_MNN(BaseTracker):
         search = search[np.newaxis, :]
         search_data = MNN.Tensor((1, 3, 287, 287), MNN.Halide_Type_Float, search, MNN.Tensor_DimensionType_Caffe)
         self.search_input[1].copyFrom(search_data)
-        self.search_inter.runSession(self.search_sess)
-        cls = self.search_inter.getSessionOutput(self.search_sess, 'cls')
-        loc = self.search_inter.getSessionOutput(self.search_sess, 'loc')
-        import ipdb;
-        ipdb.set_trace()
-
+        self.search_interp.runSession(self.search_sess)
+        cls = self.search_interp.getSessionOutput(self.search_sess, 'cls')
+        loc = self.search_interp.getSessionOutput(self.search_sess, 'loc')
+        # import ipdb; ipdb.set_trace()
         # cls convert to torch tensor
         cls_array = np.zeros((1, 10, 21, 21))
         cls_data = MNN.Tensor((1, 10, 21, 21), MNN.Halide_Type_Float, cls_array, MNN.Tensor_DimensionType_Caffe)
         cls.copyToHostTensor(cls_data)
         cls_data = np.array(cls_data.getData())
         cls = torch.from_numpy(cls_data.reshape((1, 10, 21, 21)).astype(np.float32))
+        # import ipdb;ipdb.set_trace()
         # loc convert to tensor
         loc_array = np.zeros((1, 20, 21, 21))
         loc_data = MNN.Tensor((1, 20, 21, 21), MNN.Halide_Type_Float, loc_array, MNN.Tensor_DimensionType_Caffe)
@@ -79,6 +80,7 @@ class SiamRPN_MNN(BaseTracker):
         loc_data = np.array(loc_data.getData())
         loc = torch.from_numpy(loc_data.reshape((1, 20, 21, 21)).astype(np.float32))
         score = self._convert_score(cls)
+        import ipdb;ipdb.set_trace()
         loc = loc.reshape(4, self.anchor_generator.anchor_num, loc.size()[2], loc.size()[3])
         pred_bbox = delta2bbox(self.all_anchor, loc)
         pred_bbox = pred_bbox.transpose((1, 2, 3, 0)).reshape((-1, 4))  # x1,y1,x2,y2

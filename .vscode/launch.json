@@ -12,7 +12,16 @@
             "console": "integratedTerminal",
             "args": [
                 "--cfg",
-                "configs/alexnet_config.yaml"
+                "configs/alexnet_config.yaml",
+                "--tracker",
+                "SiamRPN",
+                "--dataset",
+                "VOT2016",
+                "--snapshot",
+                "./snapshot/alexnet/checkpoint_e49.pth",
+                "--video",
+                "bag"
+
             ]
         }
         // {

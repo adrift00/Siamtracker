@@ -170,15 +170,16 @@ if __name__ == '__main__':
                                                      '_wi-{:.3f}'.format(wi) +
                                                      '_lr-{:.3f}'.format(lr)))
                         if 'VOT2016' == args.dataset or 'VOT2018' == args.dataset:
-                            video_path = os.path.join(tracker_path, 'baseline', video.name)
-                            result_path = os.path.join(video_path, video.name + '_001.txt')
-                            if _check_and_occupation(video_path, result_path):
+                            #video_path = os.path.join(tracker_path, 'baseline', video.name)
+                            #result_path = os.path.join(video_path, video.name + '_001.txt')
+                            result_path='{}/{}.txt'.format(tracker_path,video.name)
+                            if _check_and_occupation(tracker_path, result_path):
                                 continue
                             pred_bboxes = run_tracker(tracker,video.gt_rects, video.name, restart=True)
                             with open(result_path, 'w') as f:
                                 for x in pred_bboxes:
                                     if isinstance(x, int):
-                                        f.write("{:d}\n".format(x))
+                                        f.write('{:d}\n'.format(x))
                                     else:
                                         f.write(','.join([vot_float2str("%.4f", i) for i in x]) + '\n')
                         elif 'VOT2018-LT' == args.dataset:

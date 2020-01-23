@@ -1,9 +1,9 @@
-import cv2
 import numpy as np
 import torch
 from utils.bbox import delta2bbox, corner2center
 from utils.anchor import AnchorGenerator
 from trackers.base_tracker import BaseTracker
+from utils.visual import show_img
 from configs.config import cfg
 
 class SiamRPN(BaseTracker):
@@ -38,6 +38,7 @@ class SiamRPN(BaseTracker):
         scale_z = cfg.TRACK.EXAMPLAR_SIZE / size_z
         size_x=self._size_x(bbox_size)
         search = self.get_subwindow(img, self.bbox_pos, cfg.TRACK.INSTANCE_SIZE, size_x, self.channel_average)
+        # show_img(search)
         new_search = torch.from_numpy(search[np.newaxis, :].astype(np.float32)).permute(0, 3, 1, 2).cuda()
         cls, loc = self.model.track(new_search)
         score = self._convert_score(cls)
