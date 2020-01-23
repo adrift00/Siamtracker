@@ -4,8 +4,7 @@ import logging
 import json
 import argparse
 import torch
-import numpy as np
-from collections import OrderedDict
+import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.optim import Adam
 from dataset.dataset import GraphDataset
@@ -25,19 +24,34 @@ args = parser.parse_args()
 def build_dataloader():
     logger.info("building datalaoder!")
     graph_dataset = GraphDataset()
-    graph_dataloader = DataLoader(
-        graph_dataset, batch_size=cfg.GRAPH.BATCH_SIZE, shuffle=False
-    )
+    graph_dataloader = DataLoader(graph_dataset, batch_size=cfg.GRAPH.BATCH_SIZE, shuffle=False)
     return graph_dataloader
 
 
-def build_optimizer(model):
+def build_optimizer(model, current_epoch=0):
     logger.info("build optimizer!")
-    parameters = [
+    for param in model.backbone.parameters():
+        param.requires_grad = False
+    for m in model.backbone.modules():
+        if isinstance(m, nn.BatchNorm2d):
+            m.eval()
+    if current_epoch >= cfg.BACKBONE.TRAIN_EPOCH:
+        for layer in cfg.BACKBONE.TRAIN_LAYERS:
+            for param in getattr(model.backbone, layer).parameters():
+                param.requires_grad = True
+            for m in getattr(model.backbone, layer).modules():
+                if isinstance(m, nn.BatchNorm2d):
+                    m.train()
+    trainable_param = []
+    trainable_param += [
+        {'params': filter(lambda x: x.requires_grad, model.backbone.parameters()),
+         'lr': cfg.BACKBONE.LAYERS_LR * cfg.TRAIN.BASE_LR
+         }]
+    trainable_param += [
         {"params": model.gcn.parameters(), "lr": cfg.GRAPH.LR},  # TODO: may be can be optimized
-        {"params": model.rpn.parameters(), "lr": cfg.GRAPH.LR*0.5},
+        {"params": model.rpn.parameters(), "lr": cfg.GRAPH.LR * 0.5}
     ]
-    optimizer = Adam(parameters, weight_decay=cfg.GRAPH.WEIGHT_DECAY)
+    optimizer = Adam(trainable_param, weight_decay=cfg.GRAPH.WEIGHT_DECAY)
     return optimizer
 
 
@@ -48,6 +62,10 @@ def train(dataloader, optimizer, model):
     num_per_epoch = len(dataloader.dataset) // (cfg.GRAPH.BATCH_SIZE)
     for epoch in range(cfg.GRAPH.EPOCHS):
         dataloader.dataset.shuffle()
+        if epoch==cfg.BACKBONE.TRAIN_EPOCH:
+            logger.info('begin to train backbone!')
+            optimizer = build_optimizer(model, epoch)
+            logger.info("model\n{}".format(describe(model)))
         begin_time = time.time()
         for data in dataloader:
             examplar_imgs = data['examplars'].cuda()
@@ -55,7 +73,7 @@ def train(dataloader, optimizer, model):
             gt_cls = data['gt_cls'].cuda()
             gt_delta = data['gt_delta'].cuda()
             delta_weight = data['gt_delta_weight'].cuda()
-            data_time = time.time()-begin_time
+            data_time = time.time() - begin_time
             # now the batch size only surport one, get the only image
             examplar_imgs = examplar_imgs[0]
 

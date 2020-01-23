@@ -191,7 +191,7 @@ class GraphSiamModel(BaseSiamModel):
         examplars = self.backbone(examplars)
         search = self.backbone(search)
         if cfg.ADJUST.USE:
-            examplar = self.neck(examplars)
+            examplars = self.neck(examplars)
             search = self.neck(search)
 
         examplar = self.gcn(examplars)

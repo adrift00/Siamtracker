@@ -8,29 +8,35 @@ class SimilarGCN(nn.Module):
         super(SimilarGCN, self).__init__()
         # self.conv_g = nn.Conv2d(input_channels, 8, 1, 1)
         # self.conv_h = nn.Conv2d(input_channels, 8, 1, 1)
-        self.conv_g2 = nn.Conv2d(8, 1, 1, 1)
-        self.conv_h2 = nn.Conv2d(8, 1, 1, 1)
-        self.linear1 = nn.Linear(input_channels, hidden_channels)
-        self.linear2 = nn.Linear(hidden_channels, output_channels)
+        # self.conv_g2 = nn.Conv2d(8, 1, 1, 1)
+        # self.conv_h2 = nn.Conv2d(8, 1, 1, 1)
+        self.linear1 = nn.Sequential(
+            nn.Linear(input_channels, hidden_channels),
+            nn.ReLU()
+        )
+        self.linear2 = nn.Sequential(
+            nn.Linear(hidden_channels, output_channels),
+            nn.ReLU()
+        )
 
     def forward(self, x):
         N, C, H, W = x.size()
-        #nodes_embed1 = self.conv_g(x)
-        #nodes_embed2 = self.conv_h(x)
-        #nodes_embed1=self.conv_g2(nodes_embed1).permute(0, 2, 3, 1).contiguous().view(N*H*W, -1)
-        #nodes_embed2=self.conv_h2(nodes_embed2).permute(0, 2, 3, 1).contiguous().view(N*H*W, -1)
+        # nodes_embed1 = self.conv_g(x)
+        # nodes_embed2 = self.conv_h(x)
+        # nodes_embed1=self.conv_g2(nodes_embed1).permute(0, 2, 3, 1).contiguous().view(N*H*W, -1)
+        # nodes_embed2=self.conv_h2(nodes_embed2).permute(0, 2, 3, 1).contiguous().view(N*H*W, -1)
         # adjacency=nodes_embed1+nodes_embed2.t()
         ##adjacency = nodes_embed1.mm(nodes_embed2.t())
         # adjacency=F.relu(adjacency)
-        #adjacency = F.softmax(adjacency, dim=1)
-        #adjacency = adjacency+torch.eye(adjacency.size(0)).cuda()
-        #degree = torch.diag(adjacency.sum(dim=1))
-        adjacency = torch.zeros(N*H*W, N*H*W).cuda()
+        # adjacency = F.softmax(adjacency, dim=1)
+        # adjacency = adjacency+torch.eye(adjacency.size(0)).cuda()
+        # degree = torch.diag(adjacency.sum(dim=1))
+        adjacency = torch.zeros(N * H * W, N * H * W).cuda()
         for i in range(N):
-            adjacency[i*H*W:(i+1)*H*W, i*H*W:(i+1)*H*W] = 1
-            if i < N-1:
-                idx1 = range(i*H*W, (i+1)*H*W)
-                idx2 = range((i+1)*H*W, (i+2)*H*W)
+            adjacency[i * H * W:(i + 1) * H * W, i * H * W:(i + 1) * H * W] = 1
+            if i < N - 1:
+                idx1 = range(i * H * W, (i + 1) * H * W)
+                idx2 = range((i + 1) * H * W, (i + 2) * H * W)
                 adjacency[idx1, idx2] = 1
                 adjacency[idx2, idx1] = 1
         degree = torch.diag(adjacency.sum(dim=1))
