@@ -6,6 +6,7 @@ from trackers.base_tracker import BaseTracker
 from utils.visual import show_img
 from configs.config import cfg
 
+
 class SiamRPN(BaseTracker):
     def __init__(self, model):
         super(SiamRPN, self).__init__()
@@ -15,7 +16,7 @@ class SiamRPN(BaseTracker):
                                                 cfg.ANCHOR.RATIOS,
                                                 cfg.ANCHOR.STRIDE)
         self.score_size = (cfg.TRACK.INSTANCE_SIZE - cfg.TRACK.EXAMPLAR_SIZE) // \
-                          cfg.ANCHOR.STRIDE + 1+cfg.TRACK.BASE_SIZE
+                          cfg.ANCHOR.STRIDE + 1 + cfg.TRACK.BASE_SIZE
         hanning = np.hanning(self.score_size)
         window = np.outer(hanning, hanning)
         self.window = np.tile(window.flatten(), self.anchor_generator.anchor_num)
@@ -24,7 +25,7 @@ class SiamRPN(BaseTracker):
     def init(self, img, bbox):
         bbox_pos = bbox[0:2]  # cx,cy
         bbox_size = bbox[2:4]  # w,h
-        size_z=self._size_z(bbox_size)
+        size_z = self._size_z(bbox_size)
         self.channel_average = img.mean((0, 1))
         self.examplar = self.get_subwindow(img, bbox_pos, cfg.TRACK.EXAMPLAR_SIZE, size_z, self.channel_average)
         examplar = torch.tensor(self.examplar[np.newaxis, :], dtype=torch.float32).permute(0, 3, 1, 2).cuda()
@@ -36,7 +37,7 @@ class SiamRPN(BaseTracker):
         bbox_size = self.bbox_size
         size_z = self._size_z(bbox_size)
         scale_z = cfg.TRACK.EXAMPLAR_SIZE / size_z
-        size_x=self._size_x(bbox_size)
+        size_x = self._size_x(bbox_size)
         search = self.get_subwindow(img, self.bbox_pos, cfg.TRACK.INSTANCE_SIZE, size_x, self.channel_average)
         # show_img(search)
         new_search = torch.from_numpy(search[np.newaxis, :].astype(np.float32)).permute(0, 3, 1, 2).cuda()
@@ -58,18 +59,19 @@ class SiamRPN(BaseTracker):
             return size_z
 
         rc = change((bbox_size[0] / bbox_size[1]) / (pred_bbox[:, 2] / pred_bbox[:, 3]))
-        sc = change(s_z(self.bbox_size[0] * scale_z, self.bbox_size[1] * scale_z) / s_z(pred_bbox[:, 2], pred_bbox[:, 3]))
-        penalty = np.exp(-(rc * sc - 1) * cfg.TRACK.PENALTY_K)  
+        sc = change(
+            s_z(self.bbox_size[0] * scale_z, self.bbox_size[1] * scale_z) / s_z(pred_bbox[:, 2], pred_bbox[:, 3]))
+        penalty = np.exp(-(rc * sc - 1) * cfg.TRACK.PENALTY_K)
         pscore = penalty * score
         pscore = pscore * (1 - cfg.TRACK.WINDOW_INFLUENCE) + \
                  self.window * cfg.TRACK.WINDOW_INFLUENCE
         best_idx = np.argmax(pscore)
         best_bbox = pred_bbox[best_idx, :]
         # show_single_bbox(search,best_bbox.tolist())
-        best_bbox[0]-=cfg.TRACK.INSTANCE_SIZE//2 
-        best_bbox[1]-=cfg.TRACK.INSTANCE_SIZE//2
+        best_bbox[0] -= cfg.TRACK.INSTANCE_SIZE // 2
+        best_bbox[1] -= cfg.TRACK.INSTANCE_SIZE // 2
         best_bbox = best_bbox / scale_z
-        cx = best_bbox[0] + self.bbox_pos[0] 
+        cx = best_bbox[0] + self.bbox_pos[0]
         cy = best_bbox[1] + self.bbox_pos[1]
         lr = penalty[best_idx] * score[best_idx] * cfg.TRACK.LR
         w = self.bbox_size[0] * (1 - lr) + lr * best_bbox[2]
@@ -83,4 +85,3 @@ class SiamRPN(BaseTracker):
             'bbox': pred_bbox,
             'score': score[best_idx]
         }
-        

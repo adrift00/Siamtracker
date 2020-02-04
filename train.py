@@ -93,10 +93,11 @@ def build_optimizer_lr(model, current_epoch=0):
                 if isinstance(m, nn.BatchNorm2d):
                     m.train()
     trainable_param = []
-    trainable_param += [
-        {'params': filter(lambda x: x.requires_grad, model.backbone.parameters()),
+    trainable_param += [{
+        'params': filter(lambda x: x.requires_grad, model.backbone.parameters()),
          'lr': cfg.BACKBONE.LAYERS_LR * cfg.TRAIN.BASE_LR
          }]
+
     if cfg.ADJUST.USE:
         trainable_param+=[{
             'params': model.neck.parameters(),

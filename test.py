@@ -47,6 +47,7 @@ def vot_evaluate(dataset, tracker):
                 bbox = track_result['bbox']  # cx,cy,w,h
                 score = track_result['score']
                 bbox_ = [bbox[0] - bbox[2] / 2, bbox[1] - bbox[3] / 2, bbox[2], bbox[3]]  # x,y,w,h
+                # print(bbox_)
                 gt_bbox_ = [gt_bbox[0] - gt_bbox[2] / 2, gt_bbox[1] - gt_bbox[3] / 2, gt_bbox[2], gt_bbox[3]]
                 if vot_overlap(bbox_, gt_bbox_, (frame.shape[1], frame.shape[0])) > 0:
                     pred_bboxes.append(bbox_)

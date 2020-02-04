@@ -131,7 +131,7 @@ if __name__ == '__main__':
 
     # create dataset
     data_dir = os.path.join(cfg.TRACK.DATA_DIR, args.dataset)
-    dataset = get_dataset(args.dataset,data_dir)
+    dataset = get_dataset(args.dataset, data_dir)
 
     # create model
     model = BaseSiamModel()
@@ -140,7 +140,7 @@ if __name__ == '__main__':
     model = load_pretrain(model, args.snapshot).cuda().eval()
 
     # build tracker
-    tracker_name='SiamRPN'
+    tracker_name = 'SiamRPN'
     tracker = get_tracker(tracker_name, model)
 
     model_name = args.snapshot.split('/')[-1].split('.')[0]
@@ -149,6 +149,7 @@ if __name__ == '__main__':
     np.random.shuffle(seqs)
     for idx in seqs:
         video = dataset[idx]
+        video.read_imgs()
         # load image
         np.random.shuffle(args.penalty_k)
         np.random.shuffle(args.window_influence)
@@ -162,7 +163,7 @@ if __name__ == '__main__':
                         cfg.TRACK.LR = float(lr)
                         cfg.TRACK.INSTANCE_SIZE = int(ins)
                         # rebuild tracker
-                        tracker = get_tracker(tracker_name,model)
+                        tracker = get_tracker(tracker_name, model)
                         tracker_path = os.path.join(benchmark_path,
                                                     (model_name +
                                                      '_r{}'.format(ins) +
@@ -170,59 +171,58 @@ if __name__ == '__main__':
                                                      '_wi-{:.3f}'.format(wi) +
                                                      '_lr-{:.3f}'.format(lr)))
                         if 'VOT2016' == args.dataset or 'VOT2018' == args.dataset:
-                            #video_path = os.path.join(tracker_path, 'baseline', video.name)
-                            #result_path = os.path.join(video_path, video.name + '_001.txt')
-                            result_path='{}/{}.txt'.format(tracker_path,video.name)
-                            if _check_and_occupation(tracker_path, result_path):
+                            video_path = os.path.join(tracker_path, 'baseline', video.name)
+                            result_path = os.path.join(video_path, video.name + '_001.txt')
+                            if _check_and_occupation(video_path, result_path):
                                 continue
-                            pred_bboxes = run_tracker(tracker,video.gt_rects, video.name, restart=True)
+                            pred_bboxes = run_tracker(tracker, video.gt_rects, video.name, restart=True)
                             with open(result_path, 'w') as f:
                                 for x in pred_bboxes:
                                     if isinstance(x, int):
-                                        f.write('{:d}\n'.format(x))
+                                        f.write("{:d}\n".format(x))
                                     else:
                                         f.write(','.join([vot_float2str("%.4f", i) for i in x]) + '\n')
-                        elif 'VOT2018-LT' == args.dataset:
-                            video_path = os.path.join(tracker_path, 'longterm', video.name)
-                            result_path = os.path.join(video_path, '{}_001.txt'.format(video.name))
-                            if _check_and_occupation(video_path, result_path):
-                                continue
-                            pred_bboxes, scores, track_times = run_tracker(tracker,
-                                                                           video.imgs, video.gt_traj, video.name,
-                                                                           restart=False)
-                            pred_bboxes[0] = [0]
-                            with open(result_path, 'w') as f:
-                                for x in pred_bboxes:
-                                    f.write(','.join([str(i) for i in x]) + '\n')
-                            result_path = os.path.join(video_path,
-                                                       '{}_001_confidence.value'.format(video.name))
-                            with open(result_path, 'w') as f:
-                                for x in scores:
-                                    f.write('\n') if x is None else f.write("{:.6f}\n".format(x))
-                            result_path = os.path.join(video_path,
-                                                       '{}_time.txt'.format(video.name))
-                            with open(result_path, 'w') as f:
-                                for x in track_times:
-                                    f.write("{:.6f}\n".format(x))
-                        elif 'GOT-10k' == args.dataset:
-                            video_path = os.path.join('epoch_result', tracker_path, video.name)
-                            if not os.path.isdir(video_path):
-                                os.makedirs(video_path)
-                            result_path = os.path.join(video_path, '{}_001.txt'.format(video.name))
-                            with open(result_path, 'w') as f:
-                                for x in pred_bboxes:
-                                    f.write(','.join([str(i) for i in x]) + '\n')
-                            result_path = os.path.join(video_path,
-                                                       '{}_time.txt'.format(video.name))
-                            with open(result_path, 'w') as f:
-                                for x in track_times:
-                                    f.write("{:.6f}\n".format(x))
-                        else:
-                            result_path = os.path.join(tracker_path, '{}.txt'.format(video.name))
-                            if _check_and_occupation(tracker_path, result_path):
-                                continue
-                            pred_bboxes, _, _ = run_tracker(tracker, video.imgs,
-                                                            video.gt_traj, video.name, restart=False)
-                            with open(result_path, 'w') as f:
-                                for x in pred_bboxes:
-                                    f.write(','.join([str(i) for i in x]) + '\n')
+                        # elif 'VOT2018-LT' == args.dataset:
+                        #     video_path = os.path.join(tracker_path, 'longterm', video.name)
+                        #     result_path = os.path.join(video_path, '{}_001.txt'.format(video.name))
+                        #     if _check_and_occupation(video_path, result_path):
+                        #         continue
+                        #     pred_bboxes, scores, track_times = run_tracker(tracker,
+                        #                                                    video.imgs, video.gt_traj, video.name,
+                        #                                                    restart=False)
+                        #     pred_bboxes[0] = [0]
+                        #     with open(result_path, 'w') as f:
+                        #         for x in pred_bboxes:
+                        #             f.write(','.join([str(i) for i in x]) + '\n')
+                        #     result_path = os.path.join(video_path,
+                        #                                '{}_001_confidence.value'.format(video.name))
+                        #     with open(result_path, 'w') as f:
+                        #         for x in scores:
+                        #             f.write('\n') if x is None else f.write("{:.6f}\n".format(x))
+                        #     result_path = os.path.join(video_path,
+                        #                                '{}_time.txt'.format(video.name))
+                        #     with open(result_path, 'w') as f:
+                        #         for x in track_times:
+                        #             f.write("{:.6f}\n".format(x))
+                        # elif 'GOT-10k' == args.dataset:
+                        #     video_path = os.path.join('epoch_result', tracker_path, video.name)
+                        #     if not os.path.isdir(video_path):
+                        #         os.makedirs(video_path)
+                        #     result_path = os.path.join(video_path, '{}_001.txt'.format(video.name))
+                        #     with open(result_path, 'w') as f:
+                        #         for x in pred_bboxes:
+                        #             f.write(','.join([str(i) for i in x]) + '\n')
+                        #     result_path = os.path.join(video_path,
+                        #                                '{}_time.txt'.format(video.name))
+                        #     with open(result_path, 'w') as f:
+                        #         for x in track_times:
+                        #             f.write("{:.6f}\n".format(x))
+                        # else:
+                        #     result_path = os.path.join(tracker_path, '{}.txt'.format(video.name))
+                        #     if _check_and_occupation(tracker_path, result_path):
+                        #         continue
+                        #     pred_bboxes, _, _ = run_tracker(tracker, video.imgs,
+                        #                                     video.gt_traj, video.name, restart=False)
+                        #     with open(result_path, 'w') as f:
+                        #         for x in pred_bboxes:
+                        #             f.write(','.join([str(i) for i in x]) + '\n')

@@ -124,7 +124,7 @@ cfg.TRAIN.LR_WARMUP.KWARGS.step = 1
 cfg.TRACK = CfgNode()
 cfg.TRACK.TYPE='SiamRPNTracker'
 cfg.TRACK.DATA_DIR = '../pysot/testing_dataset/'  
-cfg.TRACK.RESULT_DIR='./hp_search_result'
+cfg.TRACK.RESULT_DIR='./result'
 cfg.TRACK.EXAMPLAR_SIZE = 127
 cfg.TRACK.INSTANCE_SIZE = 287
 cfg.TRACK.BASE_SIZE=0
@@ -164,8 +164,8 @@ cfg.GRAPH.UPDATE_FREQ=5
 
 cfg.GRAPH.BATCH_SIZE=1 # now only support 1 
 cfg.GRAPH.EPOCHS=50
-cfg.GRAPH.LR=0.0005
-cfg.GRAPH.WEIGHT_DECAY=0.0001
+cfg.GRAPH.LR=0.0001
+cfg.GRAPH.WEIGHT_DECAY=0.00005
 cfg.GRAPH.PRETRAIN_PATH='./snapshot/alexnet/checkpoint_e46.pth'
 
 cfg.GRAPH.SNAPSHOT_DIR='./snapshot/graph'

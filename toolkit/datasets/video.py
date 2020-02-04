@@ -11,13 +11,22 @@ class Video(object):
         self.img_names = img_names
         self.gt_rects = gt_rects
         self.pred_bboxes = {}
+        self.imgs=None
 
     def __iter__(self):
-        for (img_name, gt_rect) in zip(self.img_names, self.gt_rects):
-            img_path = os.path.join(self.data_dir, img_name)
-            img = cv2.imread(img_path)
-            gt_bbox = get_axis_aligned_bbox(np.array(gt_rect))
-            yield img, gt_bbox
+        if self.imgs is not None:
+            for (img,gt_rect) in zip(self.imgs,self.gt_rects):
+                gt_bbox=get_axis_aligned_bbox(np.array(gt_rect))
+                yield img,gt_bbox
+        else:
+            for (img_name, gt_rect) in zip(self.img_names, self.gt_rects):
+                img_path = os.path.join(self.data_dir, img_name)
+                img = cv2.imread(img_path)
+                gt_bbox = get_axis_aligned_bbox(np.array(gt_rect))
+                yield img, gt_bbox
+
+    def read_imgs(self):
+        self.imgs=[cv2.imread(os.path.join(self.data_dir,img_name)) for img_name in self.img_names ]
 
     def get_init_img_bbox(self):
         img_path = os.path.join(self.data_dir, self.img_names[0])

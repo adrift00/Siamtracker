@@ -41,13 +41,14 @@ class BaseSiamModel(nn.Module):
         search = self.backbone(search)
         examplar = self.examplar
         if cfg.ADJUST.USE:
-            examplar = self.neck(examplar)
             search = self.neck(search)
         pred_cls, pred_loc = self.rpn(examplar, search)
         return pred_cls, pred_loc
 
     def set_examplar(self, examplar):
         self.examplar = self.backbone(examplar)
+        if cfg.ADJUST.USE:
+            self.examplar=self.neck(self.examplar)
 
 
 

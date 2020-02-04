@@ -16,7 +16,7 @@ class SimilarGCN(nn.Module):
         )
         self.linear2 = nn.Sequential(
             nn.Linear(hidden_channels, output_channels),
-            nn.ReLU()
+            # nn.ReLU()
         )
 
     def forward(self, x):
@@ -31,6 +31,7 @@ class SimilarGCN(nn.Module):
         # adjacency = F.softmax(adjacency, dim=1)
         # adjacency = adjacency+torch.eye(adjacency.size(0)).cuda()
         # degree = torch.diag(adjacency.sum(dim=1))
+
         adjacency = torch.zeros(N * H * W, N * H * W).cuda()
         for i in range(N):
             adjacency[i * H * W:(i + 1) * H * W, i * H * W:(i + 1) * H * W] = 1
