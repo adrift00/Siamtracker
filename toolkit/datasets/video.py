@@ -28,6 +28,9 @@ class Video(object):
     def read_imgs(self):
         self.imgs=[cv2.imread(os.path.join(self.data_dir,img_name)) for img_name in self.img_names ]
 
+    def free_imgs(self):
+        self.imgs=None
+
     def get_init_img_bbox(self):
         img_path = os.path.join(self.data_dir, self.img_names[0])
         init_img = cv2.imread(img_path)

@@ -14,7 +14,7 @@ from toolkit.datasets import get_dataset
 from utils.model_load import load_pretrain
 from configs.config import cfg
 from utils.visual import show_double_bbox
-
+os.environ["CUDA_VISIBLE_DEVICES"] = '2'
 torch.set_num_threads(1)
 
 
@@ -143,7 +143,8 @@ if __name__ == '__main__':
     tracker_name = 'SiamRPN'
     tracker = get_tracker(tracker_name, model)
 
-    model_name = args.snapshot.split('/')[-1].split('.')[0]
+    backbone_name=args.snapshot.split('/')[-2]
+    snapshot_name = args.snapshot.split('/')[-1].split('.')[0]
     benchmark_path = os.path.join('hp_search_result', args.dataset)
     seqs = list(range(len(dataset)))
     np.random.shuffle(seqs)
@@ -165,15 +166,17 @@ if __name__ == '__main__':
                         # rebuild tracker
                         tracker = get_tracker(tracker_name, model)
                         tracker_path = os.path.join(benchmark_path,
-                                                    (model_name +
+                                                    tracker_name,
+                                                    backbone_name,
+                                                    (snapshot_name +
                                                      '_r{}'.format(ins) +
                                                      '_pk-{:.3f}'.format(pk) +
                                                      '_wi-{:.3f}'.format(wi) +
                                                      '_lr-{:.3f}'.format(lr)))
                         if 'VOT2016' == args.dataset or 'VOT2018' == args.dataset:
-                            video_path = os.path.join(tracker_path, 'baseline', video.name)
-                            result_path = os.path.join(video_path, video.name + '_001.txt')
-                            if _check_and_occupation(video_path, result_path):
+                            # video_path = os.path.join(tracker_path, 'baseline', video.name)
+                            result_path = os.path.join(tracker_path, video.name + '.txt')
+                            if _check_and_occupation(tracker_path, result_path):
                                 continue
                             pred_bboxes = run_tracker(tracker, video.gt_rects, video.name, restart=True)
                             with open(result_path, 'w') as f:
@@ -226,3 +229,4 @@ if __name__ == '__main__':
                         #     with open(result_path, 'w') as f:
                         #         for x in pred_bboxes:
                         #             f.write(','.join([str(i) for i in x]) + '\n')
+        video.free_imgs()

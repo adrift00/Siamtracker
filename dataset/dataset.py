@@ -9,7 +9,6 @@ from utils.bbox import center2corner, Center
 from utils.anchor import AnchorTarget
 from dataset.augmentation import Augmentation
 
-
 logger = logging.getLogger('global')
 
 
@@ -325,56 +324,64 @@ class MetaDataset(SubDataset):
         bbox = center2corner(Center(cx, cy, w, h))
         return bbox
 
+
 class GraphDataset(MetaDataset):
 
     def __getitem__(self, idx):
-        examplar_frames,search_frame= self.get_anno(idx)
+        examplar_frames, search_frame = self.get_anno(idx)
         examplar_imgs = [cv2.imread(examplar_path) for examplar_path in examplar_frames[0]]
         examplar_bboxes = [self.get_bbox(img, anno) for img, anno in zip(examplar_imgs, examplar_frames[1])]
         examplars = [self.examplar_aug(examplar_img, examplar_bbox, cfg.TRAIN.EXAMPLER_SIZE, gray=False)[0]
-                                        for examplar_img, examplar_bbox in zip(examplar_imgs, examplar_bboxes)]
-        examplars=np.stack(examplars, axis=0).transpose((0, 3, 1, 2)).astype(np.float32)
+                     for examplar_img, examplar_bbox in zip(examplar_imgs, examplar_bboxes)]
+        examplars = np.stack(examplars, axis=0).transpose((0, 3, 1, 2)).astype(np.float32)
 
-        search_img=cv2.imread(search_frame[0])
-        search_bbox=self.get_bbox(search_img,search_frame[1])
-        search,bbox=self.search_aug(search_img, search_bbox, cfg.TRAIN.SEARCH_SIZE, gray=False)
-        search=search.transpose((2,0,1)).astype(np.float32)
+        search_img = cv2.imread(search_frame[0])
+        search_bbox = self.get_bbox(search_img, search_frame[1])
+        search, bbox = self.search_aug(search_img, search_bbox, cfg.TRAIN.SEARCH_SIZE, gray=False)
+        search = search.transpose((2, 0, 1)).astype(np.float32)
         gt_cls, gt_delta, gt_delta_weight = self.anchor_target(bbox)
         return {
-            'examplars':examplars,
-            'search':search,
+            'examplars': examplars,
+            'search': search,
             'gt_cls': gt_cls,
             'gt_delta': gt_delta,
             'gt_delta_weight': gt_delta_weight
         }
 
-
     def get_anno(self, idx):
         video = self.videos[idx]
         trackid = np.random.choice(list(self.annos[video].keys()))
         frames = self.annos[video][trackid]['frames']
-        half = len(frames) // 2
-        left = 0
-        right = max(half, 1)
-        examplar_range = frames[left:right]
-        examplar_frames = np.random.choice(examplar_range, size=cfg.GRAPH.EXAMPLAR_SIZE, replace=True)
-        left = half
-        right = max(left + 1, len(frames) - 1)
-        search_range = frames[left:right]
-        search_frame = np.random.choice(search_range)
+        # half = len(frames) // 2
+        # left = 0
+        # right = max(half, 1)
+        # examplar_range = frames[left:right]
+        # examplar_frames = np.random.choice(examplar_range, size=cfg.GRAPH.EXAMPLAR_SIZE, replace=True)
+        # left = half
+        # right = max(left + 1, len(frames) - 1)
+        # search_range = frames[left:right]
+        # search_frame = np.random.choice(search_range)
+        if len(frames) < cfg.GRAPH.EXAMPLAR_SIZE + 1:
+            examplar_range = frames[0:-1]
+            examplar_frames = np.random.choice(examplar_range, size=cfg.GRAPH.EXAMPLAR_SIZE, replace=True)
+            search_frame = frames[-1]
+        else:
+            begin_idx = np.random.choice(range(0, len(frames) - cfg.GRAPH.EXAMPLAR_SIZE))
+            examplar_frames = frames[begin_idx: begin_idx + cfg.GRAPH.EXAMPLAR_SIZE]
+            search_frame = frames[begin_idx + cfg.GRAPH.EXAMPLAR_SIZE]
 
-        #examplars
+        # examplars
         examplar_frames = ['{:06d}'.format(examplar_frame) for examplar_frame in examplar_frames]
         examplar_paths = [os.path.join(self.data_dir, video, self.filename_format.format(examplar_frame, trackid, 'x'))
-                       for examplar_frame in examplar_frames]
+                          for examplar_frame in examplar_frames]
         examplar_annos = [self.annos[video][trackid][examplar_frame] for examplar_frame in examplar_frames]
 
-        #search
-        search_frame = '{:06d}'.format(search_frame) 
+        # search
+        search_frame = '{:06d}'.format(search_frame)
         search_path = os.path.join(self.data_dir, video, self.filename_format.format(search_frame, trackid, 'x'))
         search_anno = self.annos[video][trackid][search_frame]
-        return (examplar_paths, examplar_annos), (search_path,search_anno)
-    
+        return (examplar_paths, examplar_annos), (search_path, search_anno)
+
     def get_bbox(self, image, ori_bbox):
         img_h, img_w = image.shape[:2]
         w, h = ori_bbox[2] - ori_bbox[0], ori_bbox[3] - ori_bbox[1]
@@ -388,6 +395,3 @@ class GraphDataset(MetaDataset):
         cx, cy = img_w // 2, img_h // 2
         bbox = center2corner(Center(cx, cy, w, h))
         return bbox
-
-
-

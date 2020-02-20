@@ -2,11 +2,11 @@ META_ARC: "siamrpn_mobilenetv2_dwxcorr"
 
 BACKBONE:
     TYPE: "mobilenetv2"
-    TRAIN_LAYERS: ['layer3','layer5','layer7']
+    TRAIN_LAYERS: ['layer5','layer6','layer7']
     TRAIN_EPOCH: 10
     LAYERS_LR: 0.1
     KWARGS:
-        used_layers: [3, 5, 7]
+        used_layers: [5, 7]
         width_mult: 1.4  
 
 
@@ -14,13 +14,16 @@ ADJUST:
     USE: True
     TYPE: "AdjustAllLayer"
     KWARGS:
-        in_channels: [48, 136, 448] #because use width_mult=1.4, and make divible
-        out_channels: [256, 256, 256]
+        #in_channels: [48, 136, 448] #because use width_mult=1.4, and make divible
+        #out_channels: [256, 256, 256]
+        in_channels: [136, 448] #because use width_mult=1.4, and make divible
+        out_channels: [256, 256]
 
 RPN:
     TYPE: 'MultiRPN'
     KWARGS:
-        in_channels: [256, 256, 256]
+        #in_channels: [256, 256, 256]
+        in_channels: [256, 256]
         weighted: True
 
 ANCHOR:
@@ -39,15 +42,15 @@ TRACK:
 
 TRAIN:
     EPOCHS: 50
-    START_EPOCH: 45
-    BATCH_SIZE: 32
+    START_EPOCH: 31
+    BATCH_SIZE: 36
     RESUME: True
-    RESUME_PATH: './snapshot/mobilenetv2_ytb/checkpoint_e45.pth'
+    RESUME_PATH: './snapshot/mobilenetv2_57/checkpoint_e31.pth'
     PRETRAIN: False
     PRETRAIN_PATH: ''
     BACKBONE_PRETRAIN: True
     BACKBONE_PATH: './pretrained_models/mobilenetv2_1_4.pth'
-    SNAPSHOT_DIR: './snapshot/mobilenetv2_ytb'
+    SNAPSHOT_DIR: './snapshot/mobilenetv2_57'
     LOG_DIR: './logs/mobilenetv2'
     OUTPUT_SIZE: 25
     LR:
@@ -68,7 +71,6 @@ DATASET:
     - 'VID'
     - 'COCO'
     - 'DET'
-    - 'YOUTUBEBB'
 
     EXAMPLAR:
         SHIFT: 4

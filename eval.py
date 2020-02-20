@@ -7,6 +7,7 @@ from toolkit.benchmark.ar_benchmark import AccuracyRobustnessBenchmark
 from toolkit.benchmark.eao_benchmark import EAOBenchmark
 
 parse = argparse.ArgumentParser(description='eval trackers')
+parse.add_argument('--result_dir', default='./result', type=str, help='the dir where result stored')
 parse.add_argument('--tracker', default='', type=str, help='which tracker to eval')
 parse.add_argument('--dataset', default='', type=str, help='which dataset to eval')
 parse.add_argument('--show_video_level', default=False, type=bool, help='whether to show detail of every video')
@@ -24,7 +25,7 @@ def eval(dataset, trackers):
 
 
 if __name__ == '__main__':
-    trackers = glob(os.path.join(cfg.TRACK.RESULT_DIR, args.dataset, args.tracker+'*'))
+    trackers = glob(os.path.join(args.result_dir, args.dataset, args.tracker+'*'))
     data_dir = os.path.join(cfg.TRACK.DATA_DIR, args.dataset)
     dataset = get_dataset(args.dataset, data_dir)
     if args.dataset in ['VOT2016', 'VOT2018']:

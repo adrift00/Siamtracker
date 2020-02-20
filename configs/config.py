@@ -2,11 +2,10 @@ from yacs.config import CfgNode
 
 cfg = CfgNode()
 
-
-cfg.META_ARC='siamrpn_alex_dwxcorr'
+cfg.META_ARC = 'siamrpn_alex_dwxcorr'
 
 cfg.DATASET = CfgNode()
-cfg.DATASET.NAMES = ['VID', 'COCO', 'DET']
+cfg.DATASET.NAMES = ['VID', 'COCO', 'DET','YOUTUBEBB']
 cfg.DATASET.COCO = CfgNode()
 cfg.DATASET.COCO.DATA_DIR = 'train_dataset/coco/crop511'
 cfg.DATASET.COCO.ANNO_FILE = 'train_dataset/coco/train2017.json'
@@ -25,6 +24,13 @@ cfg.DATASET.VID.DATA_DIR = '../pysot/training_dataset/vid/crop511'
 cfg.DATASET.VID.ANNO_FILE = '../pysot/training_dataset/vid/train.json'
 cfg.DATASET.VID.FRAME_RANGE = 100
 cfg.DATASET.VID.NUM_USE = 100000
+
+cfg.DATASET.YOUTUBEBB = CfgNode()
+cfg.DATASET.YOUTUBEBB.DATA_DIR = '../pysot/training_dataset/yt_bb/youtube/crop511'
+cfg.DATASET.YOUTUBEBB.ANNO_FILE = '../pysot/training_dataset/yt_bb/youtube/train.json'
+cfg.DATASET.YOUTUBEBB.FRAME_RANGE = 3
+cfg.DATASET.YOUTUBEBB.NUM_USE = -1
+
 
 cfg.DATASET.NEG = 0.05
 cfg.DATASET.GRAY = 0.0
@@ -81,7 +87,7 @@ cfg.TRAIN.POS_NUM = 16
 cfg.TRAIN.NEG_NUM = 16
 cfg.TRAIN.EXAMPLER_SIZE = 127
 cfg.TRAIN.SEARCH_SIZE = 255
-cfg.TRAIN.BASE_SIZE=0
+cfg.TRAIN.BASE_SIZE = 0
 cfg.TRAIN.OUTPUT_SIZE = 17
 cfg.TRAIN.BATCH_SIZE = 128
 cfg.TRAIN.NUM_WORKERS = 1
@@ -104,7 +110,7 @@ cfg.TRAIN.EPOCHS = 50
 cfg.TRAIN.START_EPOCH = 0
 cfg.TRAIN.PRINT_EVERY = 20
 cfg.TRAIN.LOG_DIR = './logs'
-cfg.TRAIN.LOG_GRAD= False
+cfg.TRAIN.LOG_GRAD = False
 
 cfg.TRAIN.LR = CfgNode()
 cfg.TRAIN.LR.TYPE = 'log'
@@ -122,59 +128,55 @@ cfg.TRAIN.LR_WARMUP.KWARGS.step = 1
 
 # track
 cfg.TRACK = CfgNode()
-cfg.TRACK.TYPE='SiamRPNTracker'
-cfg.TRACK.DATA_DIR = '../pysot/testing_dataset/'  
-cfg.TRACK.RESULT_DIR='./result'
+cfg.TRACK.TYPE = 'SiamRPNTracker'
+cfg.TRACK.DATA_DIR = '../pysot/testing_dataset/'
+cfg.TRACK.RESULT_DIR = './result'
 cfg.TRACK.EXAMPLAR_SIZE = 127
 cfg.TRACK.INSTANCE_SIZE = 287
-cfg.TRACK.BASE_SIZE=0
+cfg.TRACK.BASE_SIZE = 0
 cfg.TRACK.PENALTY_K = 0.16
 cfg.TRACK.WINDOW_INFLUENCE = 0.40
 cfg.TRACK.LR = 0.3
 
-#meta adapt
-cfg.META=CfgNode()
+# meta adapt
+cfg.META = CfgNode()
 cfg.META.VID = CfgNode()
 cfg.META.VID.DATA_DIR = '../pysot/training_dataset/vid/crop511'
 cfg.META.VID.ANNO_FILE = '../pysot/training_dataset/vid/train.json'
 cfg.META.VID.FRAME_RANGE = 100
 cfg.META.VID.NUM_USE = 100000
 
-cfg.META.LR=0.00001
-cfg.META.INIT_ALPHA=0.00001
-cfg.META.WEIGHT_DECAY=0.00005
-cfg.META.BATCH_SIZE=128
-cfg.META.TRAIN_EPOCH=50
-cfg.META.PRETRAIN_PATH='./snapshot/alexnet/checkpoint_e46.pth'
+cfg.META.LR = 0.00001
+cfg.META.INIT_ALPHA = 0.00001
+cfg.META.WEIGHT_DECAY = 0.00005
+cfg.META.BATCH_SIZE = 128
+cfg.META.TRAIN_EPOCH = 50
+cfg.META.PRETRAIN_PATH = './snapshot/alexnet/checkpoint_e46.pth'
 
-cfg.META.SNAPSHOT_DIR='./snapshot/meta'
-cfg.META.LOG_DIR='./logs/alexnet_meta'
+cfg.META.SNAPSHOT_DIR = './snapshot/meta'
+cfg.META.LOG_DIR = './logs/alexnet_meta'
 
-cfg.META.TRAIN_SIZE=10
-cfg.META.TEST_SIZE=5
-cfg.META.MEMORY_SIZE=10
-cfg.META.UPDATE_THRESH=0.9
-cfg.META.UPDATE_FREQ=20
+cfg.META.TRAIN_SIZE = 10
+cfg.META.TEST_SIZE = 5
+cfg.META.MEMORY_SIZE = 10
+cfg.META.UPDATE_THRESH = 0.9
+cfg.META.UPDATE_FREQ = 20
 
-#graph 
-cfg.GRAPH=CfgNode()
+# graph
+cfg.GRAPH = CfgNode()
 
-cfg.GRAPH.EXAMPLAR_SIZE=10
-cfg.GRAPH.UPDATE_FREQ=5
+cfg.GRAPH.EXAMPLAR_SIZE = 10
+cfg.GRAPH.UPDATE_FREQ = 5
 
-cfg.GRAPH.BATCH_SIZE=1 # now only support 1 
-cfg.GRAPH.EPOCHS=50
-cfg.GRAPH.LR=0.0001
-cfg.GRAPH.WEIGHT_DECAY=0.00005
-cfg.GRAPH.PRETRAIN_PATH='./snapshot/alexnet/checkpoint_e46.pth'
+cfg.GRAPH.BATCH_SIZE = 1  # now only support 1
+cfg.GRAPH.EPOCHS = 50
+cfg.GRAPH.LR = 0.001
+cfg.GRAPH.WEIGHT_DECAY = 0.0005
+cfg.GRAPH.PRETRAIN_PATH = './snapshot/alexnet/checkpoint_e46.pth'
 
-cfg.GRAPH.SNAPSHOT_DIR='./snapshot/graph'
-cfg.GRAPH.LOG_DIR='./logs/alexnet_graph'
+cfg.GRAPH.SNAPSHOT_DIR = './snapshot/graph'
+cfg.GRAPH.LOG_DIR = './logs/alexnet_graph'
 
-cfg.GRAPH.KWARGS=CfgNode(new_allowed=True)
-cfg.GRAPH.KWARGS.input_channels=256
-cfg.GRAPH.KWARGS.output_channels=256
-
-
-
-
+cfg.GRAPH.KWARGS = CfgNode(new_allowed=True)
+cfg.GRAPH.KWARGS.input_channels = 256
+cfg.GRAPH.KWARGS.output_channels = 256

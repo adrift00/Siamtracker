@@ -5,6 +5,7 @@ import json
 import argparse
 import torch
 import torch.nn as nn
+from torch.nn.utils import clip_grad_norm_
 from torch.utils.data import DataLoader
 from torch.optim import Adam
 from dataset.dataset import GraphDataset
@@ -83,6 +84,7 @@ def train(dataloader, optimizer, model):
             loss = losses['total_loss']
             optimizer.zero_grad()
             loss.backward()
+            clip_grad_norm_(model.parameters(), cfg.TRAIN.GRAD_CLIP)
             optimizer.step()
             batch_time = time.time() - begin_time
             batch_info = {}
