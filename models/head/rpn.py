@@ -79,16 +79,15 @@ class DepthwiseRPN(RPN):
 
 
 class MultiRPN(RPN):
-    def __init__(self,  in_channels, anchor_num=5, weighted=False):
+    def __init__(self, in_channels, anchor_num=5, weighted=False):
         super(MultiRPN, self).__init__()
         self.weighted = weighted
         for i in range(len(in_channels)):
             self.add_module('head' + str(i + 2),
                             DepthwiseRPN(anchor_num, in_channels[i], in_channels[i]))
         if self.weighted:
-            self.cls_weight = nn.Parameter(torch.ones(len(in_channels)),requires_grad=True)
-            self.loc_weight = nn.Parameter(torch.ones(len(in_channels)),requires_grad=True)
-
+            self.cls_weight = nn.Parameter(torch.ones(len(in_channels)), requires_grad=True)
+            self.loc_weight = nn.Parameter(torch.ones(len(in_channels)), requires_grad=True)
 
     def forward(self, z_fs, x_fs):
         cls = []
@@ -147,18 +146,14 @@ class DepthwiseXCorr(nn.Module):
         out = self.head(feature)
         return out
 
+
 def xcorr_depthwise(x, kernel):
     """depthwise cross correlation
     """
     batch = kernel.size(0)
     channel = kernel.size(1)
-    x = x.view(1, batch*channel, x.size(2), x.size(3))
-    kernel = kernel.view(batch*channel, 1, kernel.size(2), kernel.size(3))
-    out = F.conv2d(x, kernel, groups=batch*channel)
+    x = x.view(1, batch * channel, x.size(2), x.size(3))
+    kernel = kernel.view(batch * channel, 1, kernel.size(2), kernel.size(3))
+    out = F.conv2d(x, kernel, groups=batch * channel)
     out = out.view(batch, channel, out.size(2), out.size(3))
     return out
-
-
-
-
-

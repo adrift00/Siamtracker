@@ -17,7 +17,7 @@ def seed_torch(seed=0):
 if __name__=='__main__':
     seed_torch(123456)
     anchor_target = AnchorTarget(cfg.ANCHOR.SCALES, cfg.ANCHOR.RATIOS, cfg.ANCHOR.STRIDE,
-                                              cfg.TRAIN.SEARCH_SIZE // 2, cfg.TRAIN.OUTPUT_SIZE)
+                                              cfg.TRAIN.SEARCH_SIZE // 2, 25)
 
     search_bbox=[27,47,131,79]
 

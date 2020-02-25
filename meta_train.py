@@ -8,7 +8,7 @@ import numpy as np
 from collections import OrderedDict
 from torch.utils.data import DataLoader
 from torch.optim import Adam
-from dataset.dataset import MetaDataset
+from dataset.dataset import MetaTrainDataset
 from configs.config import cfg
 from utils.model_load import load_pretrain
 from models.model_builder import MetaSiamModel
@@ -23,7 +23,7 @@ args = parser.parse_args()
 
 def build_dataloader():
     logger.info("building dataloader!")
-    meta_dataset = MetaDataset()
+    meta_dataset = MetaTrainDataset()
     meta_dataloader = DataLoader(
         meta_dataset, batch_size=cfg.META.BATCH_SIZE, shuffle=False
     )
@@ -47,6 +47,7 @@ def meta_train(datalaoder, optimizer, model):
     optim_begin_time = 0.0
     for epoch in range(cfg.META.TRAIN_EPOCH):
         data_begin_time = time.time()
+        datalaoder.dataset.shuffle()
         for iter, data in enumerate(datalaoder):
             data_time = time.time()-data_begin_time
             optim_begin_time = time.time()

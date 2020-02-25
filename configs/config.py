@@ -32,7 +32,7 @@ cfg.DATASET.YOUTUBEBB.FRAME_RANGE = 3
 cfg.DATASET.YOUTUBEBB.NUM_USE = -1
 
 
-cfg.DATASET.NEG = 0.05
+cfg.DATASET.NEG = 0.2
 cfg.DATASET.GRAY = 0.0
 
 cfg.DATASET.EXAMPLAR = CfgNode()
@@ -140,17 +140,30 @@ cfg.TRACK.LR = 0.3
 
 # meta adapt
 cfg.META = CfgNode()
-cfg.META.VID = CfgNode()
-cfg.META.VID.DATA_DIR = '../pysot/training_dataset/vid/crop511'
-cfg.META.VID.ANNO_FILE = '../pysot/training_dataset/vid/train.json'
-cfg.META.VID.FRAME_RANGE = 100
-cfg.META.VID.NUM_USE = 100000
+cfg.META.DATASET=CfgNode()
+cfg.META.DATASET.NAMES=['VID','YOUTUBEBB']
 
-cfg.META.LR = 0.00001
+cfg.META.DATASET.VID = CfgNode()
+cfg.META.DATASET.VID.DATA_DIR = '../pysot/training_dataset/vid/crop511'
+cfg.META.DATASET.VID.ANNO_FILE = '../pysot/training_dataset/vid/train.json'
+cfg.META.DATASET.VID.FRAME_RANGE = 100
+cfg.META.DATASET.VID.NUM_USE = 100000
+
+cfg.META.DATASET.YOUTUBEBB = CfgNode()
+cfg.META.DATASET.YOUTUBEBB.DATA_DIR = '../pysot/training_dataset/yt_bb/youtube/crop511'
+cfg.META.DATASET.YOUTUBEBB.ANNO_FILE = '../pysot/training_dataset/yt_bb/youtube/train.json'
+cfg.META.DATASET.YOUTUBEBB.FRAME_RANGE = 3
+cfg.META.DATASET.YOUTUBEBB.NUM_USE = -1
+
+cfg.META.DATASET.NEG = 0.2
+cfg.META.DATASET.GRAY = 0.0
+
+
+cfg.META.LR = 0.0001
 cfg.META.INIT_ALPHA = 0.00001
 cfg.META.WEIGHT_DECAY = 0.00005
 cfg.META.BATCH_SIZE = 128
-cfg.META.TRAIN_EPOCH = 50
+cfg.META.TRAIN_EPOCH = 20
 cfg.META.PRETRAIN_PATH = './snapshot/alexnet/checkpoint_e46.pth'
 
 cfg.META.SNAPSHOT_DIR = './snapshot/meta'

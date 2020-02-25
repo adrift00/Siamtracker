@@ -18,7 +18,8 @@ def seed_torch(seed=0):
 if __name__ == '__main__':
     seed_torch(123456)
     train_dataset = TrainDataset()
-    train_dataloader = DataLoader(train_dataset, batch_size=128)
+    train_dataloader = DataLoader(train_dataset, batch_size=1)
+    # train_dataloader.dataset.shuffle()
     for i, data in enumerate(train_dataloader):
         print(i)
 

@@ -32,6 +32,7 @@ class SubDataset(object):
                     map(int, filter(lambda x: x.isdigit(), frames.keys())))
                 frames.sort()
                 self.annos[video][trackid]['frames'] = frames
+        self.pick = self.shuffle()
 
     def _filter_zero(self):
         new_annos = {}
@@ -58,8 +59,8 @@ class SubDataset(object):
     def get_postive_pair(self, idx):
         video = self.videos[idx]
         trackid = np.random.choice(list(self.annos[video].keys()))
-        frames = self.annos[video][trackid]['frames']
-        examplar_idx = np.random.randint(0, len(frames))
+        frames = self.annos[video][trackid]['frames']  # the frames may not continue,so the frame_range
+        examplar_idx = np.random.randint(0, len(frames)) # in youtubebb is small
         left = max(0, examplar_idx - self.frame_range)
         right = min(len(frames) - 1, examplar_idx + self.frame_range) + 1
         search_range = frames[left:right]
@@ -73,8 +74,9 @@ class SubDataset(object):
         search_anno = self.annos[video][trackid][search_frame]
         return (examplar_path, examplar_anno), (search_path, search_anno)
 
-    def get_random_target(self):
-        idx = np.random.randint(0, self.num)
+    def get_random_target(self, idx=-1):
+        if idx == -1:
+            idx = np.random.randint(0, self.num)
         video = self.videos[idx]
 
         trackid = np.random.choice(list(self.annos[video].keys()))
@@ -109,7 +111,11 @@ class TrainDataset(Dataset):
         start_idx = 0
         for name in cfg.DATASET.NAMES:
             sub_cfg = getattr(cfg.DATASET, name)
-            sub_dataset = SubDataset(name, sub_cfg.DATA_DIR, sub_cfg.ANNO_FILE, sub_cfg.FRAME_RANGE, start_idx,
+            sub_dataset = SubDataset(name,
+                                     sub_cfg.DATA_DIR,
+                                     sub_cfg.ANNO_FILE,
+                                     sub_cfg.FRAME_RANGE,
+                                     start_idx,
                                      sub_cfg.NUM_USE)
             sub_dataset.log()
             self.all_dataset.append(sub_dataset)
@@ -132,6 +138,7 @@ class TrainDataset(Dataset):
             cfg.DATASET.SEARCH.FLIP,
             cfg.DATASET.SEARCH.COLOR
         )
+        self.shuffle()
 
     def shuffle(self):
         pick = []
@@ -139,7 +146,7 @@ class TrainDataset(Dataset):
         while num < self.num:
             p = []
             for sub_dataset in self.all_dataset:
-                sub_p = sub_dataset.shuffle()
+                sub_p = sub_dataset.pick
                 p += sub_p
             np.random.shuffle(p)
             pick += p
@@ -168,10 +175,10 @@ class TrainDataset(Dataset):
     def __getitem__(self, idx):
         idx = self.pick[idx]
         sub_dataset, idx = self._find_dataset(idx)
-        neg = cfg.DATASET.NEG and cfg.DATASET.NEG > np.random.random()
         gray = cfg.DATASET.GRAY and cfg.DATASET.GRAY > np.random.random()
+        neg = cfg.DATASET.NEG and cfg.DATASET.NEG > np.random.random()
         if neg:
-            examplar = sub_dataset.get_random_target()
+            examplar = sub_dataset.get_random_target(idx)
             search = np.random.choice(self.all_dataset).get_random_target()
         else:
             examplar, search = sub_dataset.get_postive_pair(idx)
@@ -189,11 +196,17 @@ class TrainDataset(Dataset):
                                                   search_bbox,
                                                   cfg.TRAIN.SEARCH_SIZE,
                                                   gray=gray)
-
+        # debug
+        print('template', examplar[0])
+        print('search', search[0])
+        pred_bbox = search_bbox
+        pred_bbox = list(map(lambda x: int(x), pred_bbox))
+        cv2.rectangle(search_img, (pred_bbox[0], pred_bbox[1]), (pred_bbox[2], pred_bbox[3]), (0, 0, 255), 2)
+        cv2.imwrite('search.jpg', search_img.astype(np.uint8))
+        #
+        gt_cls, gt_delta, delta_weight = self.anchor_target(search_bbox, neg)
         examplar_img = examplar_img.transpose((2, 0, 1)).astype(np.float32)  # NOTE: set as c,h,w and type=float32
         search_img = search_img.transpose((2, 0, 1)).astype(np.float32)
-
-        gt_cls, gt_delta, delta_weight = self.anchor_target(search_bbox, neg)
         return {
             'examplar_img': examplar_img,
             'search_img': search_img,
@@ -206,14 +219,53 @@ class TrainDataset(Dataset):
         return self.num
 
 
-class MetaDataset(SubDataset):
-    def __init__(self):
-        super().__init__(name='VID',
-                         data_dir=cfg.META.VID.DATA_DIR,
-                         anno_file=cfg.META.VID.ANNO_FILE,
-                         frame_range=cfg.META.VID.FRAME_RANGE,
-                         start_idx=0,
-                         num_use=cfg.META.VID.NUM_USE)
+class MetaSubDataset(SubDataset):
+    # def __init__(self,name,data_dir,anno_file,frame_range,start_idx,num_use):
+    #     super().__init__(name,data_dir,anno_file,frame_range,start_idx,num_use)
+
+    def get_anno(self, idx):
+        video = self.videos[idx]
+        trackid = np.random.choice(list(self.annos[video].keys()))
+        frames = self.annos[video][trackid]['frames']
+        half = len(frames) // 2
+        left = 0
+        right = max(half, 1)
+        examplar_frame = np.random.choice(frames[left:right])
+        train_range = frames[left:right]
+        train_frames = np.random.choice(train_range, size=cfg.META.TRAIN_SIZE, replace=True)
+        left = half
+        right = max(half + 1, len(frames) - 1)
+        test_range = frames[left:right]
+        test_frames = np.random.choice(
+            test_range, size=cfg.META.TEST_SIZE, replace=True)
+        examplar_frame = '{:06d}'.format(examplar_frame)
+        train_frames = ['{:06d}'.format(train_frame) for train_frame in train_frames]
+        test_frames = ['{:06d}'.format(test_frame) for test_frame in test_frames]
+        examplar_path = os.path.join(self.data_dir, video, self.filename_format.format(examplar_frame, trackid, 'x'))
+        train_paths = [os.path.join(self.data_dir, video, self.filename_format.format(train_frame, trackid, 'x'))
+                       for train_frame in train_frames]
+        test_paths = [os.path.join(self.data_dir, video, self.filename_format.format(test_frame, trackid, 'x'))
+                      for test_frame in test_frames]
+        examplar_anno = self.annos[video][trackid][examplar_frame]
+        train_annos = [self.annos[video][trackid][train_frame] for train_frame in train_frames]
+        test_annos = [self.annos[video][trackid][test_frame] for test_frame in test_frames]
+        return (examplar_path, examplar_anno), (train_paths, train_annos), (test_paths, test_annos)
+
+
+class MetaTrainDataset(TrainDataset):
+    def __init__(self):  # don't call the parent's __init__
+        self.all_dataset = []
+        self.num = 0
+        start_idx = 0
+        for name in cfg.META.DATASET.NAMES:
+            sub_cfg = getattr(cfg.META.DATASET, name)
+            sub_dataset = MetaSubDataset(name, sub_cfg.DATA_DIR, sub_cfg.ANNO_FILE, sub_cfg.FRAME_RANGE, start_idx,
+                                         sub_cfg.NUM_USE)
+            sub_dataset.log()
+            self.all_dataset.append(sub_dataset)
+            start_idx += sub_dataset.num
+            self.num += sub_dataset.num_use
+        # self.num = cfg.META.DATASET.VIDEO_PER_EPOCH if cfg.META.DATASET.VIDEO_PER_EPOCH > 0 else self.num
         self.anchor_target = AnchorTarget(cfg.ANCHOR.SCALES, cfg.ANCHOR.RATIOS, cfg.ANCHOR.STRIDE,
                                           cfg.TRAIN.SEARCH_SIZE // 2, cfg.TRAIN.OUTPUT_SIZE)
         self.examplar_aug = Augmentation(
@@ -232,7 +284,27 @@ class MetaDataset(SubDataset):
         )
 
     def __getitem__(self, idx):
-        examplar_frame, train_frames, test_frames = self.get_anno(idx)
+        # the neg is current not need
+        # neg = cfg.META.DATASET.NEG and cfg.META.DATASET.NEG > np.random.random()
+        # gray = cfg.META.DATASET.GRAY and cfg.META.DATASET.GRAY > np.random.random()
+        # if neg:
+        #     # train
+        #     idx = np.random.choice(range(self.num))
+        #     idx = self.pick[idx]
+        #     sub_dataset, idx = self._find_dataset(idx)
+        #     examplar_frame, train_frames, _ = sub_dataset.get_anno(idx)
+        #     # test
+        #     idx = np.random.choice(range(self.num))
+        #     idx = self.pick[idx]
+        #     sub_dataset, idx = self._find_dataset(idx)
+        #     _, _, test_frames = sub_dataset.get_anno(idx)
+        # else:
+        #     idx = self.pick[idx]
+        #     sub_dataset, idx = self._find_dataset(idx)
+        #     examplar_frame, train_frames, test_frames = sub_dataset.get_anno(idx)
+        idx = self.pick[idx]
+        sub_dataset, idx = self._find_dataset(idx)
+        examplar_frame, train_frames, test_frames = sub_dataset.get_anno(idx)
         examplar_img = cv2.imread(examplar_frame[0])
         examplar_bbox = self.get_bbox(examplar_img, examplar_frame[1])
 
@@ -282,116 +354,76 @@ class MetaDataset(SubDataset):
             'test_delta_weight': test_delta_weight
         }
 
-    def get_anno(self, idx):
-        video = self.videos[idx]
-        trackid = np.random.choice(list(self.annos[video].keys()))
-        frames = self.annos[video][trackid]['frames']
-        half = len(frames) // 2
-        left = 0
-        right = max(half, 1)
-        examplar_frame = np.random.choice(frames[left:right])
-        train_range = frames[left:right]
-        train_frames = np.random.choice(train_range, size=cfg.META.TRAIN_SIZE, replace=True)
-        left = half
-        right = max(half + 1, len(frames) - 1)
-        test_range = frames[left:right]
-        test_frames = np.random.choice(
-            test_range, size=cfg.META.TEST_SIZE, replace=True)
-        examplar_frame = '{:06d}'.format(examplar_frame)
-        train_frames = ['{:06d}'.format(train_frame) for train_frame in train_frames]
-        test_frames = ['{:06d}'.format(test_frame) for test_frame in test_frames]
-        examplar_path = os.path.join(self.data_dir, video, self.filename_format.format(examplar_frame, trackid, 'x'))
-        train_paths = [os.path.join(self.data_dir, video, self.filename_format.format(train_frame, trackid, 'x'))
-                       for train_frame in train_frames]
-        test_paths = [os.path.join(self.data_dir, video, self.filename_format.format(test_frame, trackid, 'x'))
-                      for test_frame in test_frames]
-        examplar_anno = self.annos[video][trackid][examplar_frame]
-        train_annos = [self.annos[video][trackid][train_frame] for train_frame in train_frames]
-        test_annos = [self.annos[video][trackid][test_frame] for test_frame in test_frames]
-        return (examplar_path, examplar_anno), (train_paths, train_annos), (test_paths, test_annos)
+    def __len__(self):
+        return self.num
 
-    def get_bbox(self, image, ori_bbox):
-        img_h, img_w = image.shape[:2]
-        w, h = ori_bbox[2] - ori_bbox[0], ori_bbox[3] - ori_bbox[1]
-        context_amount = 0.5
-        wc_z = w + context_amount * (w + h)
-        hc_z = h + context_amount * (w + h)
-        s_z = np.sqrt(wc_z * hc_z)
-        scale_z = cfg.TRAIN.EXAMPLER_SIZE / s_z
-        w = w * scale_z
-        h = h * scale_z
-        cx, cy = img_w // 2, img_h // 2
-        bbox = center2corner(Center(cx, cy, w, h))
-        return bbox
-
-
-class GraphDataset(MetaDataset):
-
-    def __getitem__(self, idx):
-        examplar_frames, search_frame = self.get_anno(idx)
-        examplar_imgs = [cv2.imread(examplar_path) for examplar_path in examplar_frames[0]]
-        examplar_bboxes = [self.get_bbox(img, anno) for img, anno in zip(examplar_imgs, examplar_frames[1])]
-        examplars = [self.examplar_aug(examplar_img, examplar_bbox, cfg.TRAIN.EXAMPLER_SIZE, gray=False)[0]
-                     for examplar_img, examplar_bbox in zip(examplar_imgs, examplar_bboxes)]
-        examplars = np.stack(examplars, axis=0).transpose((0, 3, 1, 2)).astype(np.float32)
-
-        search_img = cv2.imread(search_frame[0])
-        search_bbox = self.get_bbox(search_img, search_frame[1])
-        search, bbox = self.search_aug(search_img, search_bbox, cfg.TRAIN.SEARCH_SIZE, gray=False)
-        search = search.transpose((2, 0, 1)).astype(np.float32)
-        gt_cls, gt_delta, gt_delta_weight = self.anchor_target(bbox)
-        return {
-            'examplars': examplars,
-            'search': search,
-            'gt_cls': gt_cls,
-            'gt_delta': gt_delta,
-            'gt_delta_weight': gt_delta_weight
-        }
-
-    def get_anno(self, idx):
-        video = self.videos[idx]
-        trackid = np.random.choice(list(self.annos[video].keys()))
-        frames = self.annos[video][trackid]['frames']
-        # half = len(frames) // 2
-        # left = 0
-        # right = max(half, 1)
-        # examplar_range = frames[left:right]
-        # examplar_frames = np.random.choice(examplar_range, size=cfg.GRAPH.EXAMPLAR_SIZE, replace=True)
-        # left = half
-        # right = max(left + 1, len(frames) - 1)
-        # search_range = frames[left:right]
-        # search_frame = np.random.choice(search_range)
-        if len(frames) < cfg.GRAPH.EXAMPLAR_SIZE + 1:
-            examplar_range = frames[0:-1]
-            examplar_frames = np.random.choice(examplar_range, size=cfg.GRAPH.EXAMPLAR_SIZE, replace=True)
-            search_frame = frames[-1]
-        else:
-            begin_idx = np.random.choice(range(0, len(frames) - cfg.GRAPH.EXAMPLAR_SIZE))
-            examplar_frames = frames[begin_idx: begin_idx + cfg.GRAPH.EXAMPLAR_SIZE]
-            search_frame = frames[begin_idx + cfg.GRAPH.EXAMPLAR_SIZE]
-
-        # examplars
-        examplar_frames = ['{:06d}'.format(examplar_frame) for examplar_frame in examplar_frames]
-        examplar_paths = [os.path.join(self.data_dir, video, self.filename_format.format(examplar_frame, trackid, 'x'))
-                          for examplar_frame in examplar_frames]
-        examplar_annos = [self.annos[video][trackid][examplar_frame] for examplar_frame in examplar_frames]
-
-        # search
-        search_frame = '{:06d}'.format(search_frame)
-        search_path = os.path.join(self.data_dir, video, self.filename_format.format(search_frame, trackid, 'x'))
-        search_anno = self.annos[video][trackid][search_frame]
-        return (examplar_paths, examplar_annos), (search_path, search_anno)
-
-    def get_bbox(self, image, ori_bbox):
-        img_h, img_w = image.shape[:2]
-        w, h = ori_bbox[2] - ori_bbox[0], ori_bbox[3] - ori_bbox[1]
-        context_amount = 0.5
-        wc_z = w + context_amount * (w + h)
-        hc_z = h + context_amount * (w + h)
-        s_z = np.sqrt(wc_z * hc_z)
-        scale_z = cfg.TRAIN.EXAMPLER_SIZE / s_z
-        w = w * scale_z
-        h = h * scale_z
-        cx, cy = img_w // 2, img_h // 2
-        bbox = center2corner(Center(cx, cy, w, h))
-        return bbox
+# class GraphDataset(MetaDataset):
+#
+#     def __getitem__(self, idx):
+#         examplar_frames, search_frame = self.get_anno(idx)
+#         examplar_imgs = [cv2.imread(examplar_path) for examplar_path in examplar_frames[0]]
+#         examplar_bboxes = [self.get_bbox(img, anno) for img, anno in zip(examplar_imgs, examplar_frames[1])]
+#         examplars = [self.examplar_aug(examplar_img, examplar_bbox, cfg.TRAIN.EXAMPLER_SIZE, gray=False)[0]
+#                      for examplar_img, examplar_bbox in zip(examplar_imgs, examplar_bboxes)]
+#         examplars = np.stack(examplars, axis=0).transpose((0, 3, 1, 2)).astype(np.float32)
+#
+#         search_img = cv2.imread(search_frame[0])
+#         search_bbox = self.get_bbox(search_img, search_frame[1])
+#         search, bbox = self.search_aug(search_img, search_bbox, cfg.TRAIN.SEARCH_SIZE, gray=False)
+#         search = search.transpose((2, 0, 1)).astype(np.float32)
+#         gt_cls, gt_delta, gt_delta_weight = self.anchor_target(bbox)
+#         return {
+#             'examplars': examplars,
+#             'search': search,
+#             'gt_cls': gt_cls,
+#             'gt_delta': gt_delta,
+#             'gt_delta_weight': gt_delta_weight
+#         }
+#
+#     def get_anno(self, idx):
+#         video = self.videos[idx]
+#         trackid = np.random.choice(list(self.annos[video].keys()))
+#         frames = self.annos[video][trackid]['frames']
+#         # half = len(frames) // 2
+#         # left = 0
+#         # right = max(half, 1)
+#         # examplar_range = frames[left:right]
+#         # examplar_frames = np.random.choice(examplar_range, size=cfg.GRAPH.EXAMPLAR_SIZE, replace=True)
+#         # left = half
+#         # right = max(left + 1, len(frames) - 1)
+#         # search_range = frames[left:right]
+#         # search_frame = np.random.choice(search_range)
+#         if len(frames) < cfg.GRAPH.EXAMPLAR_SIZE + 1:
+#             examplar_range = frames[0:-1]
+#             examplar_frames = np.random.choice(examplar_range, size=cfg.GRAPH.EXAMPLAR_SIZE, replace=True)
+#             search_frame = frames[-1]
+#         else:
+#             begin_idx = np.random.choice(range(0, len(frames) - cfg.GRAPH.EXAMPLAR_SIZE))
+#             examplar_frames = frames[begin_idx: begin_idx + cfg.GRAPH.EXAMPLAR_SIZE]
+#             search_frame = frames[begin_idx + cfg.GRAPH.EXAMPLAR_SIZE]
+#
+#         # examplars
+#         examplar_frames = ['{:06d}'.format(examplar_frame) for examplar_frame in examplar_frames]
+#         examplar_paths = [os.path.join(self.data_dir, video, self.filename_format.format(examplar_frame, trackid, 'x'))
+#                           for examplar_frame in examplar_frames]
+#         examplar_annos = [self.annos[video][trackid][examplar_frame] for examplar_frame in examplar_frames]
+#
+#         # search
+#         search_frame = '{:06d}'.format(search_frame)
+#         search_path = os.path.join(self.data_dir, video, self.filename_format.format(search_frame, trackid, 'x'))
+#         search_anno = self.annos[video][trackid][search_frame]
+#         return (examplar_paths, examplar_annos), (search_path, search_anno)
+#
+#     def get_bbox(self, image, ori_bbox):
+#         img_h, img_w = image.shape[:2]
+#         w, h = ori_bbox[2] - ori_bbox[0], ori_bbox[3] - ori_bbox[1]
+#         context_amount = 0.5
+#         wc_z = w + context_amount * (w + h)
+#         hc_z = h + context_amount * (w + h)
+#         s_z = np.sqrt(wc_z * hc_z)
+#         scale_z = cfg.TRAIN.EXAMPLER_SIZE / s_z
+#         w = w * scale_z
+#         h = h * scale_z
+#         cx, cy = img_w // 2, img_h // 2
+#         bbox = center2corner(Center(cx, cy, w, h))
+#         return bbox

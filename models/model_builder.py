@@ -48,7 +48,8 @@ class BaseSiamModel(nn.Module):
     def set_examplar(self, examplar):
         self.examplar = self.backbone(examplar)
         if cfg.ADJUST.USE:
-            self.examplar=self.neck(self.examplar)
+            examplar=self.neck(self.examplar)
+        self.examplar=examplar
 
 
 
