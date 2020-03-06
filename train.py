@@ -17,7 +17,7 @@ from configs.config import cfg
 from dataset.dataset import TrainDataset
 from utils.log_helper import init_log, add_file_handler, print_speed
 from utils.lr_scheduler import build_lr_scheduler
-from models.model_builder import get_model
+from models import get_model
 from utils.distributed import get_world_size, dist_init, DistModule, get_rank, reduce_gradients, average_reduce
 from utils.misc import commit, describe
 from utils.model_load import load_pretrain, restore_from
@@ -31,7 +31,7 @@ parser.add_argument('--local_rank', type=int, default=0,
                     help='compulsory for pytorch launcer')
 args = parser.parse_args()
 
-
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 def seed_torch(seed=0):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
@@ -95,13 +95,13 @@ def build_optimizer_lr(model, current_epoch=0):
     trainable_param = []
     trainable_param += [{
         'params': filter(lambda x: x.requires_grad, model.backbone.parameters()),
-         'lr': cfg.BACKBONE.LAYERS_LR * cfg.TRAIN.BASE_LR
-         }]
+        'lr': cfg.BACKBONE.LAYERS_LR * cfg.TRAIN.BASE_LR
+    }]
 
     if cfg.ADJUST.USE:
-        trainable_param+=[{
+        trainable_param += [{
             'params': model.neck.parameters(),
-            'lr':cfg.TRAIN.BASE_LR
+            'lr': cfg.TRAIN.BASE_LR
         }]
     trainable_param += [{
         'params': model.rpn.parameters(),
@@ -150,6 +150,10 @@ def train(train_dataloader, model, optimizer, lr_scheduler):
             logger.info("model\n{}".format(describe(model.module)))
         train_dataloader.dataset.shuffle()
         lr_scheduler.step(epoch)
+        # log for lr
+        if get_rank() == 0:
+            for idx, pg in enumerate(optimizer.param_groups):
+                tb_writer.add_scalar('lr/group{}'.format(idx + 1), pg['lr'], iter)
         cur_lr = lr_scheduler.get_cur_lr()
         for data in train_dataloader:
             begin = time.time()
@@ -158,7 +162,7 @@ def train(train_dataloader, model, optimizer, lr_scheduler):
             gt_cls = data['gt_cls'].cuda()
             gt_delta = data['gt_delta'].cuda()
             delta_weight = data['delta_weight'].cuda()
-            data_time = time.time()-begin
+            data_time = time.time() - begin
             losses = model.forward(examplar_img, search_img, gt_cls, gt_delta, delta_weight)
             cls_loss = losses['cls_loss']
             loc_loss = losses['loc_loss']
@@ -190,11 +194,12 @@ def train(train_dataloader, model, optimizer, lr_scheduler):
                                 average_meter.batch_time.avg,
                                 cfg.TRAIN.EPOCHS * num_per_epoch)
             iter += 1
+        # save model
         if get_rank() == 0:
             state = {
                 'model': model.module.state_dict(),
                 'optimizer': optimizer.state_dict(),
-                'epoch': epoch+1
+                'epoch': epoch + 1
             }
             logger.info('save snapshot to {}/checkpoint_e{}.pth'.format(cfg.TRAIN.SNAPSHOT_DIR, epoch + 1))
             torch.save(state, '{}/checkpoint_e{}.pth'.format(cfg.TRAIN.SNAPSHOT_DIR, epoch + 1))
@@ -218,7 +223,7 @@ def main():
     train_dataloader = build_data_loader()
     model = get_model('BaseSiamModel').cuda().train()
     dist_model = DistModule(model)
-    optimizer, lr_scheduler = build_optimizer_lr(dist_model.module,cfg.TRAIN.START_EPOCH)
+    optimizer, lr_scheduler = build_optimizer_lr(dist_model.module, cfg.TRAIN.START_EPOCH)
     if cfg.TRAIN.BACKBONE_PRETRAIN:
         logger.info('load backbone from {}.'.format(cfg.TRAIN.BACKBONE_PATH))
         model.backbone = load_pretrain(model.backbone, cfg.TRAIN.BACKBONE_PATH)

@@ -15,6 +15,7 @@ ADJUST:
     TYPE: "AdjustAllLayer"
     KWARGS:
         in_channels: [48, 136, 448] #because use width_mult=1.4, and make divible
+#        in_channels: [44, 134, 448]  # without make_divible
         out_channels: [256, 256, 256]
 
 RPN:
@@ -38,30 +39,43 @@ TRACK:
     BASE_SIZE: 8  # NOTE: because the template map is crop to 7x7, so the base_size is needed.
 
 TRAIN:
-    EPOCHS: 50
-    START_EPOCH: 0
+    EPOCHS: 70
+    START_EPOCH: 17
     BATCH_SIZE: 32
     RESUME: True
-    RESUME_PATH: ''
+    RESUME_PATH: './snapshot/mobilenetv2_lr/checkpoint_e17.pth'
     PRETRAIN: False
     PRETRAIN_PATH: ''
     BACKBONE_PRETRAIN: True
     BACKBONE_PATH: './pretrained_models/mobilenetv2_1_4.pth'
-    SNAPSHOT_DIR: './snapshot/mobilenetv2_ytb'
-    LOG_DIR: './logs/mobilenetv2'
+    SNAPSHOT_DIR: './snapshot/mobilenetv2_lr'
+    LOG_DIR: './logs/mobilenetv2_lr'
     OUTPUT_SIZE: 25
+    LOG_GRAD: True
     LR:
         TYPE: 'log'
         KWARGS:
-            start_lr: 0.005
-            end_lr: 0.0005
+            start_lr: 0.01
+            end_lr: 0.001
     LR_WARMUP:
         TYPE: 'step'
         EPOCH: 5
         KWARGS:
-            start_lr: 0.001
-            end_lr: 0.005
+            start_lr: 0.005
+            end_lr: 0.01
             step: 1
+#    LR:
+#        TYPE: 'log'
+#        KWARGS:
+#            start_lr: 0.005
+#            end_lr: 0.0005
+#    LR_WARMUP:
+#        TYPE: 'step'
+#        EPOCH: 5
+#        KWARGS:
+#            start_lr: 0.001
+#            end_lr: 0.005
+#            step: 1
 
 DATASET:
     NAMES:

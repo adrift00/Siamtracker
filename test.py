@@ -140,8 +140,19 @@ def ope_evaluate(dataset, tracker):
                                                                               video.name,
                                                                               toc, idx / toc))
 
+def seed_torch(seed=0):
+    import random
+    import numpy as np
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.benchmark = False
+    torch.backends.cudnn.deterministic = True
 
 def main():
+    seed_torch(123456)
     cfg.merge_from_file(args.cfg)
     init_log('global', logging.INFO)
     # get the base model, may can be refracted.
@@ -155,6 +166,7 @@ def main():
         raise Exception('tracker is valid')
     base_model = get_model(model_name)
     base_model = load_pretrain(base_model, args.snapshot).cuda().eval()
+    base_model=base_model.cuda().eval()
     tracker = get_tracker(args.tracker, base_model)
     data_dir = os.path.join(cfg.TRACK.DATA_DIR, args.dataset)
     dataset = get_dataset(args.dataset, data_dir)

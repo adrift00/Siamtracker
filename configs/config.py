@@ -147,13 +147,13 @@ cfg.META.DATASET.VID = CfgNode()
 cfg.META.DATASET.VID.DATA_DIR = '../pysot/training_dataset/vid/crop511'
 cfg.META.DATASET.VID.ANNO_FILE = '../pysot/training_dataset/vid/train.json'
 cfg.META.DATASET.VID.FRAME_RANGE = 100
-cfg.META.DATASET.VID.NUM_USE = 100000
+cfg.META.DATASET.VID.NUM_USE = 5000
 
 cfg.META.DATASET.YOUTUBEBB = CfgNode()
 cfg.META.DATASET.YOUTUBEBB.DATA_DIR = '../pysot/training_dataset/yt_bb/youtube/crop511'
 cfg.META.DATASET.YOUTUBEBB.ANNO_FILE = '../pysot/training_dataset/yt_bb/youtube/train.json'
 cfg.META.DATASET.YOUTUBEBB.FRAME_RANGE = 3
-cfg.META.DATASET.YOUTUBEBB.NUM_USE = -1
+cfg.META.DATASET.YOUTUBEBB.NUM_USE = 5000
 
 cfg.META.DATASET.NEG = 0.2
 cfg.META.DATASET.GRAY = 0.0
@@ -193,3 +193,22 @@ cfg.GRAPH.LOG_DIR = './logs/alexnet_graph'
 cfg.GRAPH.KWARGS = CfgNode(new_allowed=True)
 cfg.GRAPH.KWARGS.input_channels = 256
 cfg.GRAPH.KWARGS.output_channels = 256
+
+# grad
+cfg.GRAD = CfgNode()
+
+cfg.GRAD.EXAMPLAR_SIZE = 10
+cfg.GRAD.UPDATE_FREQ = 5
+
+cfg.GRAD.BATCH_SIZE = 64  # now only support 1
+cfg.GRAD.EPOCHS = 50
+cfg.GRAD.LR = 0.001
+cfg.GRAD.WEIGHT_DECAY = 0.0005
+cfg.GRAD.PRETRAIN_PATH = './snapshot/alexnet/checkpoint_e46.pth'
+
+cfg.GRAD.SNAPSHOT_DIR = './snapshot/grad'
+cfg.GRAD.LOG_DIR = './logs/alexnet_grad'
+
+cfg.GRAD.KWARGS = CfgNode(new_allowed=True)
+cfg.GRAD.KWARGS.input_channels = 256
+cfg.GRAD.KWARGS.output_channels = 256

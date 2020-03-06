@@ -138,7 +138,7 @@ class TrainDataset(Dataset):
             cfg.DATASET.SEARCH.FLIP,
             cfg.DATASET.SEARCH.COLOR
         )
-        self.shuffle()
+        # self.shuffle()
 
     def shuffle(self):
         pick = []
@@ -197,12 +197,12 @@ class TrainDataset(Dataset):
                                                   cfg.TRAIN.SEARCH_SIZE,
                                                   gray=gray)
         # debug
-        print('template', examplar[0])
-        print('search', search[0])
-        pred_bbox = search_bbox
-        pred_bbox = list(map(lambda x: int(x), pred_bbox))
-        cv2.rectangle(search_img, (pred_bbox[0], pred_bbox[1]), (pred_bbox[2], pred_bbox[3]), (0, 0, 255), 2)
-        cv2.imwrite('search.jpg', search_img.astype(np.uint8))
+        # print('template', examplar[0])
+        # print('search', search[0])
+        # pred_bbox = search_bbox
+        # pred_bbox = list(map(lambda x: int(x), pred_bbox))
+        # cv2.rectangle(search_img, (pred_bbox[0], pred_bbox[1]), (pred_bbox[2], pred_bbox[3]), (0, 0, 255), 2)
+        # cv2.imwrite('search.jpg', search_img.astype(np.uint8))
         #
         gt_cls, gt_delta, delta_weight = self.anchor_target(search_bbox, neg)
         examplar_img = examplar_img.transpose((2, 0, 1)).astype(np.float32)  # NOTE: set as c,h,w and type=float32
