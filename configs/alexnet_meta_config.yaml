@@ -1,0 +1,36 @@
+
+META:
+    DATASET:
+        NAMES:
+            - 'VID'
+            - 'YOUTUBEBB'
+
+        VID:
+            DATA_DIR: '../pysot/training_dataset/vid/crop511'
+            ANNO_FILE: '../pysot/training_dataset/vid/train.json'
+            FRAME_RANGE: 100
+            NUM_USE: 5000
+
+        YOUTUBEBB:
+            DATA_DIR: '../pysot/training_dataset/yt_bb/youtube/crop511'
+            ANNO_FILE: '../pysot/training_dataset/yt_bb/youtube/train.json'
+            FRAME_RANGE: 3
+            NUM_USE: 5000
+        NEG: 0.2
+        GRAY: 0.0
+    # train
+    LR: 0.0001
+    INIT_ALPHA: 0.00001
+    WEIGHT_DECAY: 0.00005
+    BATCH_SIZE: 128
+    TRAIN_EPOCH: 20
+    TRAIN_SIZE: 10
+    TEST_SIZE: 5
+    # track
+    MEMORY_SIZE: 10
+    UPDATE_THRESH: 0.9
+    UPDATE_FREQ: 20
+    # log
+    PRETRAIN_PATH: './snapshot/alexnet/checkpoint_e46.pth'
+    SNAPSHOT_DIR: './snapshot/meta'
+    LOG_DIR: './logs/alexnet_meta'

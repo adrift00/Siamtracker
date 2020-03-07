@@ -1,4 +1,5 @@
 from torch import nn
+import torch.nn.functional as F
 
 from configs.config import cfg
 from models.backbone import get_backbone

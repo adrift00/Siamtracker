@@ -8,7 +8,7 @@ import torch.nn as nn
 from torch.nn.utils import clip_grad_norm_
 from torch.utils.data import DataLoader
 from torch.optim import Adam
-from dataset.dataset import Dataset
+from dataset.dataset import TrainDataset
 from configs.config import cfg
 from utils.model_load import load_pretrain
 from models import get_model
@@ -21,10 +21,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--cfg", default="", type=str, help="which config file to use")
 args = parser.parse_args()
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 def build_dataloader():
     logger.info("building datalaoder!")
-    grad_dataset = Dataset()
+    grad_dataset = TrainDataset()
     graph_dataloader = DataLoader(grad_dataset, batch_size=cfg.GRAD.BATCH_SIZE, shuffle=False)
     return graph_dataloader
 
@@ -51,26 +52,21 @@ def train(dataloader, optimizer, model):
     num_per_epoch = len(dataloader.dataset) // (cfg.GRAD.BATCH_SIZE)
     for epoch in range(cfg.GRAD.EPOCHS):
         dataloader.dataset.shuffle()
-        if epoch==cfg.BACKBONE.TRAIN_EPOCH:
-            logger.info('begin to train backbone!')
-            optimizer = build_optimizer(model, epoch)
-            logger.info("model\n{}".format(describe(model)))
         begin_time = time.time()
         for data in dataloader:
-            examplar_imgs = data['examplars'].cuda()
-            search_img = data['search'].cuda()
+            examplar_img = data['examplar_img'].cuda()
+            search_img = data['search_img'].cuda()
             gt_cls = data['gt_cls'].cuda()
             gt_delta = data['gt_delta'].cuda()
-            delta_weight = data['gt_delta_weight'].cuda()
+            delta_weight = data['delta_weight'].cuda()
             data_time = time.time() - begin_time
 
-            losses = model.forward(examplar_imgs, search_img, gt_cls, gt_delta, delta_weight)
+            losses = model.forward(examplar_img, search_img, gt_cls, gt_delta, delta_weight)
             cls_loss = losses['cls_loss']
             loc_loss = losses['loc_loss']
             loss = losses['total_loss']
             optimizer.zero_grad()
             loss.backward()
-            clip_grad_norm_(model.parameters(), cfg.TRAIN.GRAD_CLIP)
             optimizer.step()
             batch_time = time.time() - begin_time
             batch_info = {}

@@ -11,7 +11,7 @@ from torch.optim import Adam
 from dataset.dataset import MetaTrainDataset
 from configs.config import cfg
 from utils.model_load import load_pretrain
-from models.model_builder import MetaSiamModel
+from models.meta_siam_model import MetaSiamModel
 from utils.log_helper import init_log, add_file_handler
 from utils.misc import commit, describe
 

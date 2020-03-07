@@ -37,17 +37,16 @@ class GradSiamModel(BaseSiamModel):
         if cfg.ADJUST.USE:
             examplar = self.neck(examplar)
             search = self.neck(search)
+        examplar.requires_grad_(True)
         pred_cls, pred_loc = self.rpn(examplar, search)
         pred_cls = self.log_softmax(pred_cls)
         cls_loss = select_cross_entropy_loss(pred_cls, gt_cls)
         loc_loss = weight_l1_loss(pred_loc, gt_loc, gt_loc_weight)
         total_loss = cfg.TRAIN.CLS_WEIGHT * cls_loss + cfg.TRAIN.LOC_WEIGHT * loc_loss
         # backward for the grad
-        examplar.requires_grad_(True)
-        examplar_grads=torch.autograd.grad(total_loss,self.examplar)
-        examplar=examplar+self.grad_layer(examplar_grads)
+        examplar_grad=torch.autograd.grad(total_loss,examplar)[0]
+        examplar=examplar+self.grad_layer(examplar_grad)
         # use the new examplar to get the final loss
-        examplar.requires_grad_(False)
         pred_cls, pred_loc = self.rpn(examplar, search)
         pred_cls = self.log_softmax(pred_cls)
         cls_loss = select_cross_entropy_loss(pred_cls, gt_cls)
@@ -66,15 +65,15 @@ class GradSiamModel(BaseSiamModel):
             examplar = self.neck(examplar)
             search = self.neck(search)
         self.examplar=examplar
+        self.examplar.requires_grad_(True)
         pred_cls, pred_loc = self.rpn(self.examplar, search)
         pred_cls = self.log_softmax(pred_cls)
         cls_loss = select_cross_entropy_loss(pred_cls, gt_cls)
         loc_loss = weight_l1_loss(pred_loc, gt_loc, gt_loc_weight)
         total_loss = cfg.TRAIN.CLS_WEIGHT * cls_loss + cfg.TRAIN.LOC_WEIGHT * loc_loss
         # backward for the grad
-        self.examplar.requires_grad_(True)
-        examplar_grads=torch.autograd.grad(total_loss,self.examplar)
-        self.examplar=self.examplar+self.grad_layer(examplar_grads)
+        examplar_grad=torch.autograd.grad(total_loss,self.examplar)[0]
+        self.examplar=self.examplar+self.grad_layer(examplar_grad)
 
 
 

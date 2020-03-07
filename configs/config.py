@@ -1,6 +1,6 @@
 from yacs.config import CfgNode
 
-cfg = CfgNode()
+cfg = CfgNode(new_allowed=True)
 
 cfg.META_ARC = 'siamrpn_alex_dwxcorr'
 
@@ -32,7 +32,7 @@ cfg.DATASET.YOUTUBEBB.FRAME_RANGE = 3
 cfg.DATASET.YOUTUBEBB.NUM_USE = -1
 
 
-cfg.DATASET.NEG = 0.2
+cfg.DATASET.NEG = 0.05
 cfg.DATASET.GRAY = 0.0
 
 cfg.DATASET.EXAMPLAR = CfgNode()
@@ -138,77 +138,22 @@ cfg.TRACK.PENALTY_K = 0.16
 cfg.TRACK.WINDOW_INFLUENCE = 0.40
 cfg.TRACK.LR = 0.3
 
-# meta adapt
-cfg.META = CfgNode()
-cfg.META.DATASET=CfgNode()
-cfg.META.DATASET.NAMES=['VID','YOUTUBEBB']
-
-cfg.META.DATASET.VID = CfgNode()
-cfg.META.DATASET.VID.DATA_DIR = '../pysot/training_dataset/vid/crop511'
-cfg.META.DATASET.VID.ANNO_FILE = '../pysot/training_dataset/vid/train.json'
-cfg.META.DATASET.VID.FRAME_RANGE = 100
-cfg.META.DATASET.VID.NUM_USE = 5000
-
-cfg.META.DATASET.YOUTUBEBB = CfgNode()
-cfg.META.DATASET.YOUTUBEBB.DATA_DIR = '../pysot/training_dataset/yt_bb/youtube/crop511'
-cfg.META.DATASET.YOUTUBEBB.ANNO_FILE = '../pysot/training_dataset/yt_bb/youtube/train.json'
-cfg.META.DATASET.YOUTUBEBB.FRAME_RANGE = 3
-cfg.META.DATASET.YOUTUBEBB.NUM_USE = 5000
-
-cfg.META.DATASET.NEG = 0.2
-cfg.META.DATASET.GRAY = 0.0
-
-
-cfg.META.LR = 0.0001
-cfg.META.INIT_ALPHA = 0.00001
-cfg.META.WEIGHT_DECAY = 0.00005
-cfg.META.BATCH_SIZE = 128
-cfg.META.TRAIN_EPOCH = 20
-cfg.META.PRETRAIN_PATH = './snapshot/alexnet/checkpoint_e46.pth'
-
-cfg.META.SNAPSHOT_DIR = './snapshot/meta'
-cfg.META.LOG_DIR = './logs/alexnet_meta'
-
-cfg.META.TRAIN_SIZE = 10
-cfg.META.TEST_SIZE = 5
-cfg.META.MEMORY_SIZE = 10
-cfg.META.UPDATE_THRESH = 0.9
-cfg.META.UPDATE_FREQ = 20
 
 # graph
-cfg.GRAPH = CfgNode()
-
-cfg.GRAPH.EXAMPLAR_SIZE = 10
-cfg.GRAPH.UPDATE_FREQ = 5
-
-cfg.GRAPH.BATCH_SIZE = 1  # now only support 1
-cfg.GRAPH.EPOCHS = 50
-cfg.GRAPH.LR = 0.001
-cfg.GRAPH.WEIGHT_DECAY = 0.0005
-cfg.GRAPH.PRETRAIN_PATH = './snapshot/alexnet/checkpoint_e46.pth'
-
-cfg.GRAPH.SNAPSHOT_DIR = './snapshot/graph'
-cfg.GRAPH.LOG_DIR = './logs/alexnet_graph'
-
-cfg.GRAPH.KWARGS = CfgNode(new_allowed=True)
-cfg.GRAPH.KWARGS.input_channels = 256
-cfg.GRAPH.KWARGS.output_channels = 256
-
-# grad
-cfg.GRAD = CfgNode()
-
-cfg.GRAD.EXAMPLAR_SIZE = 10
-cfg.GRAD.UPDATE_FREQ = 5
-
-cfg.GRAD.BATCH_SIZE = 64  # now only support 1
-cfg.GRAD.EPOCHS = 50
-cfg.GRAD.LR = 0.001
-cfg.GRAD.WEIGHT_DECAY = 0.0005
-cfg.GRAD.PRETRAIN_PATH = './snapshot/alexnet/checkpoint_e46.pth'
-
-cfg.GRAD.SNAPSHOT_DIR = './snapshot/grad'
-cfg.GRAD.LOG_DIR = './logs/alexnet_grad'
-
-cfg.GRAD.KWARGS = CfgNode(new_allowed=True)
-cfg.GRAD.KWARGS.input_channels = 256
-cfg.GRAD.KWARGS.output_channels = 256
+# cfg.GRAPH = CfgNode()
+#
+# cfg.GRAPH.EXAMPLAR_SIZE = 10
+# cfg.GRAPH.UPDATE_FREQ = 5
+#
+# cfg.GRAPH.BATCH_SIZE = 1  # now only support 1
+# cfg.GRAPH.EPOCHS = 50
+# cfg.GRAPH.LR = 0.001
+# cfg.GRAPH.WEIGHT_DECAY = 0.0005
+# cfg.GRAPH.PRETRAIN_PATH = './snapshot/alexnet/checkpoint_e46.pth'
+#
+# cfg.GRAPH.SNAPSHOT_DIR = './snapshot/graph'
+# cfg.GRAPH.LOG_DIR = './logs/alexnet_graph'
+#
+# cfg.GRAPH.KWARGS = CfgNode(new_allowed=True)
+# cfg.GRAPH.KWARGS.input_channels = 256
+# cfg.GRAPH.KWARGS.output_channels = 256
