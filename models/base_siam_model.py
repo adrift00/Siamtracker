@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 import torch.nn.functional as F
 
@@ -43,9 +44,9 @@ class BaseSiamModel(nn.Module):
         return pred_cls, pred_loc
 
     def set_examplar(self, examplar):
-        self.examplar = self.backbone(examplar)
+        examplar = self.backbone(examplar)
         if cfg.ADJUST.USE:
-            examplar=self.neck(self.examplar)
+            examplar=self.neck(examplar)
         self.examplar=examplar
 
 
@@ -54,13 +55,21 @@ class BaseSiamModel(nn.Module):
     # @torch.no_grad()
     # def forward(self, examplar):
     #     examplar = self.backbone(examplar)
-    #     return examplar
+    #     if cfg.ADJUST.USE:
+    #         examplar=self.neck(examplar)
+    #     return examplar[0],examplar[1],examplar[2]
 
+    # def get_examplar(self, examplar):
+    #     examplar = self.backbone(examplar)
+    #     if cfg.ADJUST.USE:
+    #         examplar=self.neck(examplar)
+    #     return examplar[0],examplar[1],examplar[2]
+    #
     # @torch.no_grad()
-    # def forward(self, examplar, search):
+    # def forward(self, e0,e1,e2, search):
+    #     examplar=[e0,e1,e2]
     #     search = self.backbone(search)
     #     if cfg.ADJUST.USE:
-    #         examplar = self.neck(examplar)
     #         search = self.neck(search)
     #     pred_cls, pred_loc = self.rpn(examplar, search)
     #     return pred_cls, pred_loc

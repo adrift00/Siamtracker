@@ -5,6 +5,7 @@ import json
 import argparse
 import torch
 import torch.nn as nn
+from tensorboardX import SummaryWriter
 from torch.nn.utils import clip_grad_norm_
 from torch.utils.data import DataLoader
 from torch.optim import Adam
@@ -22,6 +23,7 @@ parser.add_argument("--cfg", default="", type=str, help="which config file to us
 args = parser.parse_args()
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+
 
 def build_dataloader():
     logger.info("building datalaoder!")
@@ -50,6 +52,7 @@ def train(dataloader, optimizer, model):
     begin_time = 0.0
     average_meter = AverageMeter()
     num_per_epoch = len(dataloader.dataset) // (cfg.GRAD.BATCH_SIZE)
+    tb_writer = SummaryWriter(cfg.GRAD.LOG_DIR)
     for epoch in range(cfg.GRAD.EPOCHS):
         dataloader.dataset.shuffle()
         begin_time = time.time()
@@ -73,7 +76,16 @@ def train(dataloader, optimizer, model):
             batch_info['data_time'] = data_time
             batch_info['batch_time'] = batch_time
             average_meter.update(**batch_info)
+            # add summary writer
+            for k, v in losses.items():
+                if k.startswith('examplar'):
+                    tb_writer.add_histogram(k, v, iter)
+                else:
+                    tb_writer.add_scalar(k, v, iter)
             if iter % cfg.TRAIN.PRINT_EVERY == 0:
+                logger.info('epoch: {}, iter: {}, init_cls_loss: {}, init_loc_loss: {}, init_loss: {}'
+                            .format(epoch + 1, iter, losses['init_cls_loss'].item(), losses['init_loc_loss'].item(),
+                                    losses['init_total_loss'].item()))
                 logger.info('epoch: {}, iter: {}, cls_loss: {}, loc_loss: {}, loss: {}'
                             .format(epoch + 1, iter, cls_loss.item(), loc_loss.item(), loss.item()))
                 print_speed(iter + 1,
@@ -117,5 +129,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

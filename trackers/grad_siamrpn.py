@@ -31,11 +31,13 @@ class GradSiamRPN(BaseTracker):
         self.channel_average = img.mean((0, 1))
         self.examplar = self.get_subwindow(img, bbox_pos, cfg.TRACK.EXAMPLAR_SIZE, size_z, self.channel_average)
         examplar = torch.tensor(self.examplar[np.newaxis, :], dtype=torch.float32).permute(0, 3, 1, 2).cuda()
-        size_x=self._size_x(bbox_size)
-        search = self.get_subwindow(img, self.bbox_pos, cfg.TRACK.INSTANCE_SIZE, size_x, self.channel_average)
+        size_x = self._size_x(bbox_size)
+        search = self.get_subwindow(img, bbox_pos, cfg.TRACK.INSTANCE_SIZE, size_x, self.channel_average)
         search = torch.from_numpy(search[np.newaxis, :].astype(np.float32)).permute(0, 3, 1, 2).cuda()
-        gt_cls,gt_loc,gt_loc_weight=self.anchor_target(bbox)
-        self.model.set_examplar(examplar,search,gt_cls,gt_loc,gt_loc_weight)
+        gt_cls, gt_loc, gt_loc_weight = self.anchor_target(bbox)
+        gt_cls, gt_loc, gt_loc_weight = [torch.from_numpy(x[np.newaxis, :]).cuda() for x in
+                                         [gt_cls, gt_loc, gt_loc_weight]]
+        self.model.set_examplar(examplar, search, gt_cls, gt_loc, gt_loc_weight)
         self.bbox_pos = bbox_pos
         self.bbox_size = bbox_size
 

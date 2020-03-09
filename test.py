@@ -5,7 +5,7 @@ import logging
 import torch
 from toolkit.datasets import get_dataset
 from utils.model_load import load_pretrain
-from models.model_builder import get_model
+from models import get_model
 from configs.config import cfg
 from trackers import get_tracker
 from utils.visual import show_double_bbox
@@ -21,6 +21,7 @@ parser.add_argument('--video', default='', type=str, help='choose one special vi
 parser.add_argument('--vis', action='store_true', help='whether to visual')
 args = parser.parse_args()
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 torch.set_num_threads(1)  # use only one threads to test the real speed
 
 
@@ -47,11 +48,16 @@ def vot_evaluate(dataset, tracker):
                 bbox = track_result['bbox']  # cx,cy,w,h
                 score = track_result['score']
                 bbox_ = [bbox[0] - bbox[2] / 2, bbox[1] - bbox[3] / 2, bbox[2], bbox[3]]  # x,y,w,h
-                # print(bbox_)
-                gt_bbox_ = [gt_bbox[0] - gt_bbox[2] / 2, gt_bbox[1] - gt_bbox[3] / 2, gt_bbox[2], gt_bbox[3]]
-                if vot_overlap(bbox_, gt_bbox_, (frame.shape[1], frame.shape[0])) > 0:
+                gt_bbox_ = [gt_bbox[0] - (gt_bbox[2] - 1) / 2,
+                            gt_bbox[1] - (gt_bbox[3] - 1) / 2,
+                            gt_bbox[2],
+                            gt_bbox[3]]
+                overlap = vot_overlap(bbox_, gt_bbox_, (frame.shape[1], frame.shape[0]))
+                # print('idx: {}\n pred: {}\n gt: {}\n overlap: {}\n'.format(idx, bbox_, gt_bbox_, overlap))
+                if overlap > 0:
                     pred_bboxes.append(bbox_)
                 else:
+                    # print('lost idx: {}'.format(idx))
                     pred_bboxes.append(2)
                     frame_count = idx + 5
                     lost_number += 1
@@ -74,11 +80,9 @@ def vot_evaluate(dataset, tracker):
                     f.write(','.join(['{:.4f}'.format(i) for i in x]) + '\n')
         # log
         total_lost += lost_number
-        print('[{:d}/{:d}] video: {}, time: {:.1f}s, speed: {:.1f}fps, lost_number: {:d} '.format(v_idx + 1,
-                                                                                                  len(dataset),
-                                                                                                  video.name,
-                                                                                                  toc, idx / toc,
-                                                                                                  lost_number))
+
+        print('[{:d}/{:d}] | video: {:12s} | time: {:4.1f}s | speed: {:3.1f}fps | lost_number: {:d} ' \
+              .format(v_idx + 1, len(dataset), video.name, toc, idx / toc, lost_number))
     print('total_lost: {}'.format(total_lost))
 
 
@@ -140,6 +144,7 @@ def ope_evaluate(dataset, tracker):
                                                                               video.name,
                                                                               toc, idx / toc))
 
+
 def seed_torch(seed=0):
     import random
     import numpy as np
@@ -151,22 +156,26 @@ def seed_torch(seed=0):
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.deterministic = True
 
+
 def main():
     seed_torch(123456)
     cfg.merge_from_file(args.cfg)
     init_log('global', logging.INFO)
     # get the base model, may can be refracted.
+    # TODO: use the config in the yaml file,instead of this
     if args.tracker == 'SiamRPN':
         model_name = 'BaseSiamModel'
     elif args.tracker == 'MetaSiamRPN':
         model_name = 'MetaSiamModel'
     elif args.tracker == 'GraphSiamRPN':
         model_name = 'GraphSiamModel'
+    elif args.tracker =='GradSiamRPN':
+        model_name='GradSiamModel'
     else:
         raise Exception('tracker is valid')
     base_model = get_model(model_name)
     base_model = load_pretrain(base_model, args.snapshot).cuda().eval()
-    base_model=base_model.cuda().eval()
+    base_model = base_model.cuda().eval()
     tracker = get_tracker(args.tracker, base_model)
     data_dir = os.path.join(cfg.TRACK.DATA_DIR, args.dataset)
     dataset = get_dataset(args.dataset, data_dir)

@@ -1,3 +1,4 @@
+import cv2
 import numpy as np
 import torch
 from utils.bbox import delta2bbox, corner2center
@@ -27,7 +28,7 @@ class SiamRPN(BaseTracker):
         bbox_size = bbox[2:4]  # w,h
         size_z = self._size_z(bbox_size)
         self.channel_average = img.mean((0, 1))
-        self.examplar = self.get_subwindow(img, bbox_pos, cfg.TRACK.EXAMPLAR_SIZE, size_z, self.channel_average)
+        self.examplar = self.get_subwindow(img, bbox_pos, cfg.TRACK.EXAMPLAR_SIZE, round(size_z), self.channel_average)
         examplar = torch.tensor(self.examplar[np.newaxis, :], dtype=torch.float32).permute(0, 3, 1, 2).cuda()
         self.model.set_examplar(examplar)
         self.bbox_pos = bbox_pos
@@ -38,7 +39,8 @@ class SiamRPN(BaseTracker):
         size_z = self._size_z(bbox_size)
         scale_z = cfg.TRACK.EXAMPLAR_SIZE / size_z
         size_x = self._size_x(bbox_size)
-        search = self.get_subwindow(img, self.bbox_pos, cfg.TRACK.INSTANCE_SIZE, size_x, self.channel_average)
+        search = self.get_subwindow(img, self.bbox_pos, cfg.TRACK.INSTANCE_SIZE, round(size_x), self.channel_average)
+        cv2.imwrite("search.png",search)
         # show_img(search)
         new_search = torch.from_numpy(search[np.newaxis, :].astype(np.float32)).permute(0, 3, 1, 2).cuda()
         cls, loc = self.model.track(new_search)

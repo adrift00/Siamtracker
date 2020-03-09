@@ -14,6 +14,7 @@ parse.add_argument('--show_video_level', default=False, type=bool, help='whether
 
 args = parse.parse_args()
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 def eval(dataset, trackers):
     ar_benchmark = AccuracyRobustnessBenchmark(dataset)
