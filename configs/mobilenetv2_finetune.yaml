@@ -14,15 +14,14 @@ ADJUST:
     USE: True
     TYPE: "AdjustAllLayer"
     KWARGS:
-        in_channels: [48, 136, 448] #because use width_mult=1.4, and make divible
-#        in_channels: [44, 134, 448]  # without make_divible
+        in_channels: [44, 134, 448]  # without make_divible
         out_channels: [256, 256, 256]
 
 RPN:
     TYPE: 'MultiRPN'
     KWARGS:
         in_channels: [256, 256, 256]
-        weighted: True
+        weighted: False
 
 ANCHOR:
     STRIDE: 8
@@ -40,10 +39,10 @@ TRACK:
 
 TRAIN:
     EPOCHS: 70
-    START_EPOCH: 30
+    START_EPOCH: 24
     BATCH_SIZE: 32
     RESUME: True
-    RESUME_PATH: './snapshot/mobilenetv2_lr/checkpoint_e30.pth'
+    RESUME_PATH: './snapshot/mobilenetv2_lr/checkpoint_e24.pth'
     PRETRAIN: False
     PRETRAIN_PATH: ''
     BACKBONE_PRETRAIN: True

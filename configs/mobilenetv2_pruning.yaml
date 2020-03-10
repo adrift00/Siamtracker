@@ -14,15 +14,14 @@ ADJUST:
     USE: True
     TYPE: "AdjustAllLayer"
     KWARGS:
-        in_channels: [48, 136, 448] #because use width_mult=1.4, and make divible
-#        in_channels: [44, 134, 448]  # without make_divible
+        in_channels: [44, 134, 448]  # without make_divible
         out_channels: [256, 256, 256]
 
 RPN:
     TYPE: 'MultiRPN'
     KWARGS:
         in_channels: [256, 256, 256]
-        weighted: True
+        weighted: False
 
 ANCHOR:
     STRIDE: 8
@@ -40,10 +39,10 @@ TRACK:
 
 TRAIN:
     EPOCHS: 70
-    START_EPOCH: 30
+    START_EPOCH: 24
     BATCH_SIZE: 32
     RESUME: True
-    RESUME_PATH: './snapshot/mobilenetv2_lr/checkpoint_e30.pth'
+    RESUME_PATH: './snapshot/mobilenetv2_lr/checkpoint_e24.pth'
     PRETRAIN: False
     PRETRAIN_PATH: ''
     BACKBONE_PRETRAIN: True
@@ -100,3 +99,22 @@ DATASET:
 
     NEG: 0.2
     GRAY: 0.0
+
+PRUNING:
+    RATE: 0.5
+    BATCH_SIZE: 28
+    BASE_LR: 0.001
+    MOMENTUM:
+    WEIGHT_DECAY:
+    EPOCHS: 20
+    START_EPOCHS: 0
+
+    LOG_DIR: './logs/mobilenetv2_gdp'
+    SNAPSHOT_DIR: './snapshot/mobilenetv2_gdp'
+    LOG_GRAD: False
+    GRAD_CLIP: False
+    PRETRAIN_PATH: './pretrained_models/siamrpn_mobi.pth'
+    LR:
+        TYPE: 'step'
+        KWARGS:
+
