@@ -7,7 +7,6 @@ import random
 import argparse
 import numpy as np
 import torch
-import torch.nn as nn
 from torch import optim
 from torch.nn.utils import clip_grad_norm_
 from torch.utils.data import DataLoader
@@ -29,11 +28,7 @@ args = parser.parse_args()
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
-# TODO:
-# 1. add log for mask others
-# 2. modify lr_scheduler to step
-# 3. complete the config file
-# 4. check the train file
+
 def seed_torch(seed=0):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
@@ -120,7 +115,7 @@ def train(train_dataloader, model, optimizer, lr_scheduler):
     def is_valid_number(x):
         return not (math.isnan(x) or math.isinf(x) or x > 1e4)
 
-    logger.info("model\n{}".format(describe(model.module)))
+    logger.info("model\n{}".format(describe(model)))
     tb_writer = SummaryWriter(cfg.PRUNING.LOG_DIR)
     average_meter = AverageMeter()
     start_epoch = cfg.PRUNING.START_EPOCH
@@ -129,6 +124,12 @@ def train(train_dataloader, model, optimizer, lr_scheduler):
     if not os.path.exists(cfg.PRUNING.SNAPSHOT_DIR):
         os.makedirs(cfg.PRUNING.SNAPSHOT_DIR)
     for epoch in range(cfg.PRUNING.START_EPOCH, cfg.PRUNING.EPOCHS):
+
+        for k, v in model.mask.items():
+            tb_writer.add_histogram(k,v,iter)
+        for k,v in model.mask.items():
+            tb_writer.add_histogram(k,v,iter)
+
         train_dataloader.dataset.shuffle()
         lr_scheduler.step(epoch)
         # log for lr
@@ -155,6 +156,13 @@ def train(train_dataloader, model, optimizer, lr_scheduler):
                     log_grads(model.module, tb_writer, iter)
                 clip_grad_norm_(model.parameters(), cfg.PRUNING.GRAD_CLIP)
                 optimizer.step()
+            # update the scores
+            if (epoch <= 10 and iter % 10 == 0) or (epoch > 10 and iter % 5 == 0):
+                model.update_mask(examplar_img,search_img,gt_cls,gt_delta,delta_weight)
+                for k, v in model.mask.items():
+                    tb_writer.add_histogram(k,v,iter)
+                for k,v in model.mask_scores.items():
+                    tb_writer.add_histogram(k,v,iter)
 
             batch_time = time.time() - begin
             batch_info = {}
@@ -165,6 +173,7 @@ def train(train_dataloader, model, optimizer, lr_scheduler):
             average_meter.update(**batch_info)
             for k, v in batch_info.items():
                 tb_writer.add_scalar(k, v, iter)
+
             if iter % cfg.TRAIN.PRINT_EVERY == 0:
                 logger.info('epoch: {}, iter: {}, cur_lr:{}, cls_loss: {}, loc_loss: {}, loss: {}'
                             .format(epoch + 1, iter, cur_lr, cls_loss.item(), loc_loss.item(), loss.item()))
@@ -172,11 +181,6 @@ def train(train_dataloader, model, optimizer, lr_scheduler):
                             average_meter.batch_time.avg,
                             cfg.PRUNING.EPOCHS * num_per_epoch)
             iter += 1
-        if epoch <= 10 and epoch % 5 == 0:
-            model.update_mask()
-        elif epoch % 2 == 0:
-            model.update_mask()
-        print(model.mask_scores)
         # save model
         state = {
             'model': model.module.state_dict(),

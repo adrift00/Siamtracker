@@ -57,31 +57,20 @@ TRAIN:
             start_lr: 0.01
             end_lr: 0.001
     LR_WARMUP:
+        WARMUP: False # the value is used for lr_scheduler
         TYPE: 'step'
         EPOCH: 5
         KWARGS:
             start_lr: 0.005
             end_lr: 0.01
             step: 1
-#    LR:
-#        TYPE: 'log'
-#        KWARGS:
-#            start_lr: 0.005
-#            end_lr: 0.0005
-#    LR_WARMUP:
-#        TYPE: 'step'
-#        EPOCH: 5
-#        KWARGS:
-#            start_lr: 0.001
-#            end_lr: 0.005
-#            step: 1
 
 DATASET:
     NAMES:
     - 'VID'
-    - 'COCO'
-    - 'DET'
-    - 'YOUTUBEBB'
+#    - 'COCO'
+#    - 'DET'
+#    - 'YOUTUBEBB'
 
     EXAMPLAR:
         SHIFT: 4
@@ -102,12 +91,12 @@ DATASET:
 
 PRUNING:
     RATE: 0.5
-    BATCH_SIZE: 28
+    BATCH_SIZE: 24
     BASE_LR: 0.001
-    MOMENTUM:
-    WEIGHT_DECAY:
+    MOMENTUM: 0.9
+    WEIGHT_DECAY: 0.0005
     EPOCHS: 20
-    START_EPOCHS: 0
+    START_EPOCH: 0
 
     LOG_DIR: './logs/mobilenetv2_gdp'
     SNAPSHOT_DIR: './snapshot/mobilenetv2_gdp'
@@ -117,4 +106,6 @@ PRUNING:
     LR:
         TYPE: 'step'
         KWARGS:
+            start_lr: 0.001
+
 

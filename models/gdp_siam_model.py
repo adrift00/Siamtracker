@@ -14,14 +14,9 @@ class GDPSiamModel(BaseSiamModel):
 
     def forward(self, examplar, search, gt_cls, gt_loc, gt_loc_weight):
         # compute the weight*mask
-        model_params = dict(model.named_parameters())
+        model_params = dict(self.named_parameters())
         for k, mask in self.mask.items():
-            if k in model_params:
-                if mask.size() == model_params[k].size():
-                    # todo: can't use the mm
-                    model_params[k].data.mm(mask)
-                else:
-                    model_params[k].data.mm(mask[:, None, None, None])
+            model_params[k].data.mul_(mask[:, None, None, None])
         # normal forward
         examplar = self.backbone(examplar)
         search = self.backbone(search)
@@ -47,23 +42,32 @@ class GDPSiamModel(BaseSiamModel):
         # for bottleneck
         # layer0
         for i in range(3):
-            self.mask[backbone_param_keys[i]] = torch.ones(backbone_param_values[i].size(0))
+            if len(backbone_param_values[i].size()) == 1:  # skip the batchnorm
+                continue
+            self.mask['backbone.' + backbone_param_keys[i]] = torch.ones(backbone_param_values[i].size(0)).cuda()
         # layer1-7
         idx = 3
         for i in range(7):  # 6 layers
             for j in range(repeat_times[i]):  # for n bottlenecks
                 for k in range(6):
+                    if len(backbone_param_values[idx + k].size()) == 1:  # skip the batchnorm
+                        continue
                     # the 6 params will be mask, because the last layer of every bottleneck will be added.
-                    self.mask[backbone_param_keys[idx + k]] = torch.ones(backbone_param_values[idx + k].size(0))
+                    self.mask['backbone.' + backbone_param_keys[idx + k]] = torch.ones(
+                        backbone_param_values[idx + k].size(0)).cuda()
                 idx += 9
         # for neck
         for k, v in self.neck.named_parameters():
-            self.mask[k] = torch.ones(v.size(0))
+            if len(v.size()) == 1:  # skip the batchnorm
+                continue
+            self.mask['neck.' + k] = torch.ones(v.size(0)).cuda()
 
         # for rpn
         for k, v in self.rpn.named_parameters():
             if 'head.0' in k or 'head.1' in k:  # now only prune the first layer of the head
-                self.mask[k] = torch.ones(v.size(0))
+                if len(v.size()) == 1:  # skip the batchnorm
+                    continue
+                self.mask['rpn.' + k] = torch.ones(v.size(0)).cuda()
 
     def update_mask(self, *args):
         loss = self(*args)  # self.forward
@@ -72,15 +76,24 @@ class GDPSiamModel(BaseSiamModel):
         pruned_params = {k: model_params[k] for k in self.mask.keys()}
         pruned_grads = torch.autograd.grad(total_loss, pruned_params.values())
         for i, (k, v) in enumerate(self.mask.items()):
-            self.mask_scores[k] = (pruned_grads[i] * model_params[k]).sum().item()
-        sorted_scores = dict(sorted(self.mask_scores.items(), key=lambda item: item[1], reverse=True))
+            self.mask_scores[k] = (pruned_grads[i] * model_params[k]).sum((1, 2, 3)).detach().cpu().numpy()
+        # sort and select
+        # expand to one dim layers
+        mask_layer_scores = {}
+        for key, mask_score in self.mask_scores.items():
+            for i, score in enumerate(mask_score):
+                new_key = '{}_{}'.format(key, i)
+                mask_layer_scores[new_key] = score
+        # sort the scoresself.mask['backbone.layer7.0.conv.3.weight'].shape
+        sorted_scores = sorted(mask_layer_scores.items(), key=lambda item: item[1], reverse=True)
         # get the first n layers
-        pruning_num = len(sorted_scores) * cfg.PRUNING_RATE
-        for i, (k, v) in enumerate(sorted_scores.items()):
+        pruning_num = len(mask_layer_scores) * cfg.PRUNING.RATE
+        for i, (k, v) in enumerate(sorted_scores):
+            key, idx = k.split('_')
             if i < pruning_num:
-                self.mask[k] = 1
+                self.mask[key][int(idx)] = 1
             else:
-                self.mask[k] = 0
+                self.mask[key][int(idx)] = 0
 
 
 if __name__ == '__main__':
