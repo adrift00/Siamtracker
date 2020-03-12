@@ -76,7 +76,7 @@ class GDPSiamModel(BaseSiamModel):
         pruned_params = {k: model_params[k] for k in self.mask.keys()}
         pruned_grads = torch.autograd.grad(total_loss, pruned_params.values())
         for i, (k, v) in enumerate(self.mask.items()):
-            self.mask_scores[k] = (pruned_grads[i] * model_params[k]).sum((1, 2, 3)).detach().cpu().numpy()
+            self.mask_scores[k] = (pruned_grads[i] * model_params[k]).sum((1, 2, 3)).abs().detach().cpu().numpy()
         # sort and select
         # expand to one dim layers
         mask_layer_scores = {}
@@ -86,8 +86,21 @@ class GDPSiamModel(BaseSiamModel):
                 mask_layer_scores[new_key] = score
         # sort the scoresself.mask['backbone.layer7.0.conv.3.weight'].shape
         sorted_scores = sorted(mask_layer_scores.items(), key=lambda item: item[1], reverse=True)
+
         # get the first n layers
         pruning_num = len(mask_layer_scores) * cfg.PRUNING.KEEP_RATE
+
+        # cls_num=0
+        # loc_num=0
+        # for i,(k,v) in enumerate(sorted_scores):
+        #     if 'cls' in k and i>pruning_num:
+        #         print(i,k,v)
+        #         cls_num+=1
+        # print('----------------------------')
+        # for i,(k,v) in enumerate(sorted_scores):
+        #     if 'loc' in k and i>pruning_num:
+        #         print(i,k,v)
+        #         loc_num+=1
         for i, (k, v) in enumerate(sorted_scores):
             key, idx = k.split('_')
             if i < pruning_num:
