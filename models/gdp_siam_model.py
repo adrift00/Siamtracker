@@ -87,7 +87,7 @@ class GDPSiamModel(BaseSiamModel):
         # sort the scoresself.mask['backbone.layer7.0.conv.3.weight'].shape
         sorted_scores = sorted(mask_layer_scores.items(), key=lambda item: item[1], reverse=True)
         # get the first n layers
-        pruning_num = len(mask_layer_scores) * cfg.PRUNING.RATE
+        pruning_num = len(mask_layer_scores) * cfg.PRUNING.KEEP_RATE
         for i, (k, v) in enumerate(sorted_scores):
             key, idx = k.split('_')
             if i < pruning_num:

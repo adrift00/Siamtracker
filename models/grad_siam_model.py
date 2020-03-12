@@ -14,7 +14,8 @@ class GradSiamModel(BaseSiamModel):
             nn.BatchNorm2d(256),
             nn.ReLU(),
             nn.Conv2d(256, 256, 3, 1, 1),
-            nn.ReLU()
+            nn.BatchNorm2d(256),
+            nn.Tanh()
         )
 
     def freeze_model(self):
@@ -29,7 +30,8 @@ class GradSiamModel(BaseSiamModel):
         freeze_module(self.backbone)
         if cfg.ADJUST.USE:
             freeze_module(self.neck)
-        freeze_module(self.rpn)
+        # don't freeze the rpn, finetune it
+        # freeze_module(self.rpn)
 
     def forward(self, examplar, search, gt_cls, gt_loc, gt_loc_weight):
         examplar = self.backbone(examplar)
@@ -53,7 +55,7 @@ class GradSiamModel(BaseSiamModel):
             init_cls_losses[i], init_loc_losses[i], init_total_losses[i] = cls_loss, loc_loss, total_loss
         # backward for the grad
         init_cls_losses, init_loc_losses, init_total_losses = init_cls_losses.mean(), init_loc_losses.mean(), init_total_losses.mean()
-        examplar_grad = torch.autograd.grad(init_total_losses, examplar0)[0]
+        examplar_grad = torch.autograd.grad(init_total_losses, examplar0)[0] * 1000
         examplar0 = examplar0 + self.grad_layer(examplar_grad)
         # use the new examplar to get the final loss
         cls_losses = torch.zeros([examplar.size(0)]).cuda()
@@ -91,5 +93,5 @@ class GradSiamModel(BaseSiamModel):
         loc_loss = weight_l1_loss(pred_loc, gt_loc, gt_loc_weight)
         total_loss = cfg.TRAIN.CLS_WEIGHT * cls_loss + cfg.TRAIN.LOC_WEIGHT * loc_loss
         # backward for the grad
-        examplar_grad = torch.autograd.grad(total_loss, self.examplar)[0]
+        examplar_grad = torch.autograd.grad(total_loss, self.examplar)[0] * 1000
         self.examplar = self.examplar + self.grad_layer(examplar_grad)

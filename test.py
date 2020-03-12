@@ -169,8 +169,8 @@ def main():
         model_name = 'MetaSiamModel'
     elif args.tracker == 'GraphSiamRPN':
         model_name = 'GraphSiamModel'
-    elif args.tracker =='GradSiamRPN':
-        model_name='GradSiamModel'
+    elif args.tracker == 'GradSiamRPN':
+        model_name = 'GradSiamModel'
     else:
         raise Exception('tracker is valid')
     base_model = get_model(model_name)

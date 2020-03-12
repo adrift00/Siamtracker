@@ -183,7 +183,7 @@ def train(train_dataloader, model, optimizer, lr_scheduler):
             iter += 1
         # save model
         state = {
-            'model': model.module.state_dict(),
+            'model': model.state_dict(),
             'optimizer': optimizer.state_dict(),
             'epoch': epoch + 1
         }
