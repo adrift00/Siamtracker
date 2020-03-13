@@ -90,17 +90,6 @@ class GDPSiamModel(BaseSiamModel):
         # get the first n layers
         pruning_num = len(mask_layer_scores) * cfg.PRUNING.KEEP_RATE
 
-        # cls_num=0
-        # loc_num=0
-        # for i,(k,v) in enumerate(sorted_scores):
-        #     if 'cls' in k and i>pruning_num:
-        #         print(i,k,v)
-        #         cls_num+=1
-        # print('----------------------------')
-        # for i,(k,v) in enumerate(sorted_scores):
-        #     if 'loc' in k and i>pruning_num:
-        #         print(i,k,v)
-        #         loc_num+=1
         for i, (k, v) in enumerate(sorted_scores):
             key, idx = k.split('_')
             if i < pruning_num:

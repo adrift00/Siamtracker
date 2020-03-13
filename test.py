@@ -3,6 +3,8 @@ import argparse
 import cv2
 import logging
 import torch
+
+from gdp_pruning import pruning_model
 from toolkit.datasets import get_dataset
 from utils.model_load import load_pretrain
 from models import get_model
@@ -173,9 +175,13 @@ def main():
         model_name = 'GradSiamModel'
     else:
         raise Exception('tracker is valid')
-    base_model = get_model(model_name)
-    base_model = load_pretrain(base_model, args.snapshot).cuda().eval()
-    base_model = base_model.cuda().eval()
+    # base_model = get_model(model_name)
+    # base_model = load_pretrain(base_model, args.snapshot).cuda().eval()
+    # base_model = base_model.cuda().eval()
+    base_model = get_model('GDPSiamModel')
+    base_model = load_pretrain(base_model, args.snapshot)
+    base_model = pruning_model(base_model).cuda().eval()
+
     tracker = get_tracker(args.tracker, base_model)
     data_dir = os.path.join(cfg.TRACK.DATA_DIR, args.dataset)
     dataset = get_dataset(args.dataset, data_dir)

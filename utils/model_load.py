@@ -64,6 +64,18 @@ def load_pretrain(model, pretrained_path):
     device = torch.cuda.current_device()
     pretrained_dict = torch.load(pretrained_path,
                                  map_location=lambda storage, loc: storage.cuda(device))
+    # for meta
+    if 'init_weight' in pretrained_dict.keys() \
+            and 'alpha' in pretrained_dict.keys() \
+            and 'bn_weight' in pretrained_dict.keys():
+        model.init_weight = pretrained_dict['init_weight']
+        model.alpha = pretrained_dict['alpha']
+        model.bn_weight = pretrained_dict['bn_weight']
+    if 'mask' in pretrained_dict.keys() \
+            and 'mask_scores' in pretrained_dict.keys():
+        model.mask=pretrained_dict['mask']
+        model.mask_scores=pretrained_dict['mask_scores']
+
     if "model" in pretrained_dict.keys():
         pretrained_dict = remove_prefix(pretrained_dict['model'],
                                         'module.')
@@ -83,17 +95,6 @@ def load_pretrain(model, pretrained_path):
         check_keys(model, pretrained_dict)
     model.load_state_dict(pretrained_dict, strict=False)
 
-    # for meta
-    if 'init_weight' in pretrained_dict.keys() \
-            and 'alpha' in pretrained_dict.keys() \
-            and 'bn_weight' in pretrained_dict.keys():
-        model.init_weight = pretrained_dict['init_weight']
-        model.alpha = pretrained_dict['alpha']
-        model.bn_weight = pretrained_dict['bn_weight']
-    if 'mask' in pretrained_dict.keys() \
-            and 'mask_scores' in pretrained_dict.keys():
-        model.mask=pretrained_dict['mask']
-        model.mask_scores=pretrained_dict['mask_scores']
     return model
 
 
