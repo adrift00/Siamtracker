@@ -94,9 +94,9 @@ def train(dataloader, optimizer, model):
                 else:
                     tb_writer.add_scalar(k, v, iter)
             if iter % cfg.TRAIN.PRINT_EVERY == 0:
-                logger.info('epoch: {}, iter: {}, init_cls_loss: {}, init_loc_loss: {}, init_loss: {}'
-                            .format(epoch + 1, iter, losses['init_cls_loss'].item(), losses['init_loc_loss'].item(),
-                                    losses['init_total_loss'].item()))
+                # logger.info('epoch: {}, iter: {}, init_cls_loss: {}, init_loc_loss: {}, init_loss: {}'
+                #             .format(epoch + 1, iter, losses['init_cls_loss'].item(), losses['init_loc_loss'].item(),
+                #                     losses['init_total_loss'].item()))
                 logger.info('epoch: {}, iter: {}, cls_loss: {}, loc_loss: {}, loss: {}'
                             .format(epoch + 1, iter, cls_loss.item(), loc_loss.item(), loss.item()))
                 print_speed(iter + 1,

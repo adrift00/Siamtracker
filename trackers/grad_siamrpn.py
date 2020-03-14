@@ -1,5 +1,7 @@
 import numpy as np
 import torch
+
+from dataset.augmentation import Augmentation
 from utils.bbox import delta2bbox, corner2center
 from utils.anchor import AnchorGenerator, AnchorTarget
 from trackers.base_tracker import BaseTracker
@@ -24,6 +26,14 @@ class GradSiamRPN(BaseTracker):
         self.anchor_target = AnchorTarget(cfg.ANCHOR.SCALES, cfg.ANCHOR.RATIOS, cfg.ANCHOR.STRIDE,
                                           cfg.TRACK.INSTANCE_SIZE // 2, self.score_size)
 
+        self.search_aug = Augmentation(
+            cfg.DATASET.SEARCH.SHIFT,
+            cfg.DATASET.SEARCH.SCALE,
+            cfg.DATASET.SEARCH.BLUR,
+            cfg.DATASET.SEARCH.FLIP,
+            cfg.DATASET.SEARCH.COLOR
+        )
+
     def init(self, img, bbox):
         bbox_pos = bbox[0:2]  # cx,cy
         bbox_size = bbox[2:4]  # w,h
@@ -33,11 +43,20 @@ class GradSiamRPN(BaseTracker):
         examplar = torch.tensor(self.examplar[np.newaxis, :], dtype=torch.float32).permute(0, 3, 1, 2).cuda()
         size_x = self._size_x(bbox_size)
         search = self.get_subwindow(img, bbox_pos, cfg.TRACK.INSTANCE_SIZE, size_x, self.channel_average)
-        search = torch.from_numpy(search[np.newaxis, :].astype(np.float32)).permute(0, 3, 1, 2).cuda()
-        gt_cls, gt_loc, gt_loc_weight = self.anchor_target(bbox)
-        gt_cls, gt_loc, gt_loc_weight = [torch.from_numpy(x[np.newaxis, :]).cuda() for x in
-                                         [gt_cls, gt_loc, gt_loc_weight]]
-        self.model.set_examplar(examplar, search, gt_cls, gt_loc, gt_loc_weight)
+        # search = torch.from_numpy(search[np.newaxis, :].astype(np.float32)).permute(0, 3, 1, 2).cuda()
+        # gt_cls, gt_loc, gt_loc_weight = self.anchor_target(bbox)
+        # gt_cls, gt_loc, gt_loc_weight = [torch.from_numpy(x[np.newaxis, :]).cuda() for x in
+        #                                  [gt_cls, gt_loc, gt_loc_weight]]
+
+        memory = [self.search_aug(search, bbox, cfg.TRACK.INSTANCE_SIZE) for i in range(cfg.GRAD.MEMORY_SIZE)]
+        self.search_mem, self.bbox_mem = zip(*memory)
+        self.search_mem, self.bbox_mem = list(self.search_mem), list(self.bbox_mem)
+        # self.score_mem = [1] * cfg.META.MEMORY_SIZE
+
+        gt_data = zip(*[self.anchor_target(bbox) for bbox in self.bbox_mem])
+        gt_cls, gt_loc, gt_loc_weight = map(lambda x: torch.from_numpy(np.stack(x)).cuda(), gt_data)
+        searches = torch.from_numpy(np.stack(self.search_mem).astype(np.float32).transpose((0, 3, 1, 2))).cuda()
+        self.model.set_examplar(examplar, searches, gt_cls, gt_loc, gt_loc_weight)
         self.bbox_pos = bbox_pos
         self.bbox_size = bbox_size
 

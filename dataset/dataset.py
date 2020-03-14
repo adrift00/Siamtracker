@@ -358,6 +358,37 @@ class MetaTrainDataset(TrainDataset):
         return self.num
 
 
+class GradSubDataset(SubDataset):
+    # def __init__(self,name,data_dir,anno_file,frame_range,start_idx,num_use):
+    #     super().__init__(name,data_dir,anno_file,frame_range,start_idx,num_use)
+
+    def get_anno(self, idx):
+        video = self.videos[idx]
+        trackid = np.random.choice(list(self.annos[video].keys()))
+        frames = self.annos[video][trackid]['frames']
+        half = len(frames) // 2
+        left = 0
+        right = max(half, 1)
+        examplar_frame = np.random.choice(frames[left:right])
+        train_range = frames[left:right]
+        train_frames = np.random.choice(train_range, size=cfg.GRAD.TRAIN_SIZE, replace=True)
+        left = half
+        right = max(half + 1, len(frames) - 1)
+        test_range = frames[left:right]
+        test_frames = np.random.choice(
+            test_range, size=cfg.GRAD.TEST_SIZE, replace=True)
+        examplar_frame = '{:06d}'.format(examplar_frame)
+        train_frames = ['{:06d}'.format(train_frame) for train_frame in train_frames]
+        test_frames = ['{:06d}'.format(test_frame) for test_frame in test_frames]
+        examplar_path = os.path.join(self.data_dir, video, self.filename_format.format(examplar_frame, trackid, 'x'))
+        train_paths = [os.path.join(self.data_dir, video, self.filename_format.format(train_frame, trackid, 'x'))
+                       for train_frame in train_frames]
+        test_paths = [os.path.join(self.data_dir, video, self.filename_format.format(test_frame, trackid, 'x'))
+                      for test_frame in test_frames]
+        examplar_anno = self.annos[video][trackid][examplar_frame]
+        train_annos = [self.annos[video][trackid][train_frame] for train_frame in train_frames]
+        test_annos = [self.annos[video][trackid][test_frame] for test_frame in test_frames]
+        return (examplar_path, examplar_anno), (train_paths, train_annos), (test_paths, test_annos)
 class GradTrainDataset(TrainDataset):
     def __init__(self): # don't override the super init
         self.all_dataset = []
@@ -365,7 +396,7 @@ class GradTrainDataset(TrainDataset):
         start_idx = 0
         for name in cfg.DATASET.NAMES:
             sub_cfg = getattr(cfg.DATASET, name)
-            sub_dataset = SubDataset(name,
+            sub_dataset = GradSubDataset(name,
                                      sub_cfg.DATA_DIR,
                                      sub_cfg.ANNO_FILE,
                                      sub_cfg.FRAME_RANGE,
@@ -375,7 +406,7 @@ class GradTrainDataset(TrainDataset):
             self.all_dataset.append(sub_dataset)
             start_idx += sub_dataset.num
             self.num += sub_dataset.num_use
-        # self.num = cfg.DATASET.VIDEO_PER_EPOCH if cfg.DATASET.VIDEO_PER_EPOCH > 0 else self.num
+        self.num = cfg.DATASET.VIDEO_PER_EPOCH if cfg.DATASET.VIDEO_PER_EPOCH > 0 else self.num
         self.anchor_target = AnchorTarget(cfg.ANCHOR.SCALES, cfg.ANCHOR.RATIOS, cfg.ANCHOR.STRIDE,
                                           cfg.TRAIN.SEARCH_SIZE // 2, cfg.TRAIN.OUTPUT_SIZE)
         self.template_aug = Augmentation(
@@ -392,57 +423,107 @@ class GradTrainDataset(TrainDataset):
             cfg.DATASET.SEARCH.FLIP,
             cfg.DATASET.SEARCH.COLOR
         )
+    # def __getitem__(self, idx):
+    #     idx = self.pick[idx]
+    #     sub_dataset, idx = self._find_dataset(idx)
+    #     gray = cfg.DATASET.GRAY and cfg.DATASET.GRAY > np.random.random()
+    #     neg = cfg.DATASET.NEG and cfg.DATASET.NEG > np.random.random()
+    #     if neg:
+    #         examplar = sub_dataset.get_random_target(idx)
+    #         search = np.random.choice(self.all_dataset).get_random_target()
+    #     else:
+    #         examplar, search = sub_dataset.get_postive_pair(idx)
+    #     examplar_img = cv2.imread(examplar[0])
+    #     search_img = cv2.imread(search[0])
+    #
+    #     examplar_bbox = self.get_bbox(examplar_img, examplar[1])
+    #     search_bbox = self.get_bbox(search_img, search[1])  # bbox: x1,y1,x2,y2
+    #
+    #     train_search_img,train_search_bbox=self.search_aug(examplar_img,
+    #                                                        examplar_bbox,
+    #                                                        cfg.TRAIN.SEARCH_SIZE,
+    #                                                        gray=gray)
+    #     examplar_img, examplar_bbox = self.template_aug(examplar_img,
+    #                                                     examplar_bbox,
+    #                                                     cfg.TRAIN.EXAMPLER_SIZE,
+    #                                                     gray=gray)
+    #     test_search_img, test_search_bbox = self.search_aug(search_img,
+    #                                               search_bbox,
+    #                                               cfg.TRAIN.SEARCH_SIZE,
+    #                                               gray=gray)
+    #     # debug
+    #     # print('template', examplar[0])
+    #     # print('search', search[0])
+    #     # pred_bbox = search_bbox
+    #     # pred_bbox = list(map(lambda x: int(x), pred_bbox))
+    #     # cv2.rectangle(search_img, (pred_bbox[0], pred_bbox[1]), (pred_bbox[2], pred_bbox[3]), (0, 0, 255), 2)
+    #     # cv2.imwrite('search.jpg', search_img.astype(np.uint8))
+    #     #
+    #     train_gt_cls, train_gt_delta, train_delta_weight = self.anchor_target(train_search_bbox, neg)
+    #     examplar_img = examplar_img.transpose((2, 0, 1)).astype(np.float32)  # NOTE: set as c,h,w and type=float32
+    #     train_search_img = train_search_img.transpose((2, 0, 1)).astype(np.float32)
+    #     #
+    #     test_gt_cls, test_gt_delta, test_delta_weight = self.anchor_target(test_search_bbox, neg)
+    #     test_search_img = test_search_img.transpose((2, 0, 1)).astype(np.float32)
+    #     return {
+    #         'examplar_img': examplar_img,
+    #         'train_search_img': train_search_img,
+    #         'test_search_img': test_search_img,
+    #         'train_gt_cls': train_gt_cls,
+    #         'train_gt_delta': train_gt_delta,
+    #         'train_delta_weight': train_delta_weight,
+    #         'test_gt_cls': test_gt_cls,
+    #         'test_gt_delta': test_gt_delta,
+    #         'test_delta_weight': test_delta_weight
+    #     }
     def __getitem__(self, idx):
         idx = self.pick[idx]
         sub_dataset, idx = self._find_dataset(idx)
-        gray = cfg.DATASET.GRAY and cfg.DATASET.GRAY > np.random.random()
-        neg = cfg.DATASET.NEG and cfg.DATASET.NEG > np.random.random()
-        if neg:
-            examplar = sub_dataset.get_random_target(idx)
-            search = np.random.choice(self.all_dataset).get_random_target()
-        else:
-            examplar, search = sub_dataset.get_postive_pair(idx)
-        examplar_img = cv2.imread(examplar[0])
-        search_img = cv2.imread(search[0])
+        examplar_frame, train_frames, test_frames = sub_dataset.get_anno(idx)
+        examplar_img = cv2.imread(examplar_frame[0])
+        examplar_bbox = self.get_bbox(examplar_img, examplar_frame[1])
 
-        examplar_bbox = self.get_bbox(examplar_img, examplar[1])
-        search_bbox = self.get_bbox(search_img, search[1])  # bbox: x1,y1,x2,y2
+        examplar_img, _ = self.template_aug(examplar_img,
+                                            examplar_bbox,
+                                            cfg.TRAIN.EXAMPLER_SIZE,
+                                            gray=False)
+        # train set
+        train_imgs = [cv2.imread(train_path) for train_path in train_frames[0]]
+        train_bboxes = [self.get_bbox(img, anno)
+                        for img, anno in zip(train_imgs, train_frames[1])]
+        train_set = [self.search_aug(train_img, train_bbox, cfg.TRAIN.SEARCH_SIZE, gray=False)
+                     for train_img, train_bbox in zip(train_imgs, train_bboxes)]
+        train_imgs, train_bboxes = zip(*train_set)
+        train_imgs, train_bboxes = list(train_imgs), list(train_bboxes)
+        # test set
+        test_imgs = [cv2.imread(test_path) for test_path in test_frames[0]]
+        test_bboxes = [self.get_bbox(img, anno) for img, anno in zip(test_imgs, test_frames[1])]
+        test_set = [self.search_aug(test_img, test_bbox, cfg.TRAIN.SEARCH_SIZE, gray=False)
+                    for test_img, test_bbox in zip(test_imgs, test_bboxes)]
+        test_imgs, test_bboxes = zip(*test_set)
+        test_imgs, test_bboxes = list(test_imgs), list(test_bboxes)
 
-        train_search_img,train_search_bbox=self.search_aug(examplar_img,
-                                                           examplar_bbox,
-                                                           cfg.TRAIN.SEARCH_SIZE,
-                                                           gray=gray)
-        examplar_img, examplar_bbox = self.template_aug(examplar_img,
-                                                        examplar_bbox,
-                                                        cfg.TRAIN.EXAMPLER_SIZE,
-                                                        gray=gray)
-        test_search_img, test_search_bbox = self.search_aug(search_img,
-                                                  search_bbox,
-                                                  cfg.TRAIN.SEARCH_SIZE,
-                                                  gray=gray)
-        # debug
-        # print('template', examplar[0])
-        # print('search', search[0])
-        # pred_bbox = search_bbox
-        # pred_bbox = list(map(lambda x: int(x), pred_bbox))
-        # cv2.rectangle(search_img, (pred_bbox[0], pred_bbox[1]), (pred_bbox[2], pred_bbox[3]), (0, 0, 255), 2)
-        # cv2.imwrite('search.jpg', search_img.astype(np.uint8))
-        #
-        train_gt_cls, train_gt_delta, train_delta_weight = self.anchor_target(train_search_bbox, neg)
-        examplar_img = examplar_img.transpose((2, 0, 1)).astype(np.float32)  # NOTE: set as c,h,w and type=float32
-        train_search_img = train_search_img.transpose((2, 0, 1)).astype(np.float32)
-        #
-        test_gt_cls, test_gt_delta, test_delta_weight = self.anchor_target(test_search_bbox, neg)
-        test_search_img = test_search_img.transpose((2, 0, 1)).astype(np.float32)
+        examplar_img=examplar_img.transpose((2,0,1)).astype(np.float32)
+
+        train_imgs, test_imgs = map(
+            lambda x: np.stack(x, axis=0).transpose((0, 3, 1, 2)).astype(np.float32),
+            [train_imgs, test_imgs])
+        # train
+        gt_data = zip(*[self.anchor_target(bbox) for bbox in train_bboxes])
+        train_cls, train_delta, train_delta_weight = map(lambda x: np.stack(x, axis=0), gt_data)
+        # test
+        gt_data = zip(*[self.anchor_target(bbox) for bbox in test_bboxes])
+        test_cls, test_delta, test_delta_weight = map(
+            lambda x: np.stack(x, axis=0), gt_data)
         return {
             'examplar_img': examplar_img,
-            'train_search_img': train_search_img,
-            'test_search_img': test_search_img,
-            'train_gt_cls': train_gt_cls,
-            'train_gt_delta': train_gt_delta,
+            'train_search_img': train_imgs,
+            'test_search_img': test_imgs,
+            'train_gt_cls': train_cls,
+            'train_gt_delta': train_delta,
             'train_delta_weight': train_delta_weight,
-            'test_gt_cls': test_gt_cls,
-            'test_gt_delta': test_gt_delta,
+            'test_gt_cls': test_cls,
+            'test_gt_delta': test_delta,
             'test_delta_weight': test_delta_weight
         }
 

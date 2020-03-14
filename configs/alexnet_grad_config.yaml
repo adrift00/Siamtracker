@@ -6,18 +6,20 @@ DATASET:
 
     VID:
         NUM_USE: -1
+    VIDEO_PER_EPOCH: -1
 
 GRAD:
-    BATCH_SIZE: 16
+    BATCH_SIZE: 4
     EPOCHS: 50
     LR: 0.001
     WEIGHT_DECAY: 0.0005
     PRETRAIN_PATH: './snapshot/alexnet/checkpoint_e46.pth'
-    SNAPSHOT_DIR: './snapshot/grad_single_loss'
-    LOG_DIR: './logs/alexnet_grad_single_loss'
+    SNAPSHOT_DIR: './snapshot/grad_with_set'
+    LOG_DIR: './logs/alexnet_grad_with_set'
 
     KWARGS:
         input_channels: 256
         output_channels: 256
 
-
+    TRAIN_SIZE: 5
+    TEST_SIZE: 3
