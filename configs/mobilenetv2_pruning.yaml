@@ -7,7 +7,7 @@ BACKBONE:
     LAYERS_LR: 0.1
     KWARGS:
         used_layers: [3, 5, 7]
-        width_mult: 1.4  
+        width_mult: 1.4
 
 
 ADJUST:
@@ -67,11 +67,12 @@ TRAIN:
 
 DATASET:
     NAMES:
-    - 'VID'
-#    - 'COCO'
-#    - 'DET'
-#    - 'YOUTUBEBB'
-
+        - 'VID'
+    #    - 'COCO'
+    #    - 'DET'
+    #    - 'YOUTUBEBB'
+    VID:
+        NUM_USE: 1000
     EXAMPLAR:
         SHIFT: 4
         SCALE: 0.05
@@ -88,6 +89,7 @@ DATASET:
 
     NEG: 0.2
     GRAY: 0.0
+    VIDEO_PER_EPOCH: -1
 
 PRUNING:
     KEEP_RATE: 0.75

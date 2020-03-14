@@ -52,6 +52,9 @@ class GDPSiamModel(BaseSiamModel):
                 for k in range(6):
                     if len(backbone_param_values[idx + k].size()) == 1:  # skip the batchnorm
                         continue
+                    if len(backbone_param_values[idx + k].size()) == 4 \
+                            and backbone_param_values[idx + k].size(1) == 1:  # skip the depth-wise conv
+                        continue
                     # the 6 params will be mask, because the last layer of every bottleneck will be added.
                     self.mask['backbone.' + backbone_param_keys[idx + k]] = torch.ones(
                         backbone_param_values[idx + k].size(0)).cuda()
