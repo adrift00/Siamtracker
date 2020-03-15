@@ -48,6 +48,7 @@ class GradSiamRPN(BaseTracker):
         # gt_cls, gt_loc, gt_loc_weight = [torch.from_numpy(x[np.newaxis, :]).cuda() for x in
         #                                  [gt_cls, gt_loc, gt_loc_weight]]
 
+        bbox = self._get_bbox(cfg.TRACK.INSTANCE_SIZE // 2, bbox_size, cfg.TRACK.INSTANCE_SIZE / size_x)
         memory = [self.search_aug(search, bbox, cfg.TRACK.INSTANCE_SIZE) for i in range(cfg.GRAD.MEMORY_SIZE)]
         self.search_mem, self.bbox_mem = zip(*memory)
         self.search_mem, self.bbox_mem = list(self.search_mem), list(self.bbox_mem)
