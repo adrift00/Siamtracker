@@ -72,14 +72,15 @@ class GDPSiamModel(BaseSiamModel):
                     continue
                 self.mask['rpn.' + k] = torch.ones(v.size(0)).cuda()
 
-    def update_mask(self, *args):
-        loss = self(*args)  # self.forward
-        total_loss = loss['total_loss']
+    def update_mask(self):
+        # loss = self(*args)  # self.forward
+        # total_loss = loss['total_loss']
         model_params = dict(self.named_parameters())
         pruned_params = {k: model_params[k] for k in self.mask.keys()}
-        pruned_grads = torch.autograd.grad(total_loss, pruned_params.values())
+        # pruned_grads = torch.autograd.grad(total_loss, pruned_params.values())
         for i, (k, v) in enumerate(self.mask.items()):
-            self.mask_scores[k] = (pruned_grads[i] * model_params[k]).sum((1, 2, 3)).abs().detach().cpu().numpy()
+            # self.mask_scores[k] = (pruned_grads[i] * pruned_params[k]).sum((1, 2, 3)).abs().detach().cpu().numpy()
+            self.mask_scores[k]=torch.sqrt(torch.pow(pruned_params[k],2).sum((1,2,3))).detach().cpu().numpy()
         # sort and select
         # expand to one dim layers
         mask_layer_scores = {}

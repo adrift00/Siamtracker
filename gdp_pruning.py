@@ -300,8 +300,9 @@ if __name__ == '__main__':
     logger.info("config \n{}".format(json.dumps(cfg, indent=4)))
     model = GDPSiamModel()
     model = load_pretrain(model, args.snapshot)
+    print(model.mask_scores)
 
     for k, v in model.mask.items():
         print(k, v)
     model = pruning_model(model)
-    torch.save(model.state_dict(), './snapshot/mobilenetv2_gdp/model_pruning.pth')
+    # torch.save(model.state_dict(), './snapshot/mobilenetv2_gdp/model_pruning.pth')

@@ -68,11 +68,11 @@ TRAIN:
 DATASET:
     NAMES:
         - 'VID'
-    #    - 'COCO'
-    #    - 'DET'
-    #    - 'YOUTUBEBB'
+#        - 'COCO'
+#        - 'DET'
+        - 'YOUTUBEBB'
     VID:
-        NUM_USE: 1000
+        NUM_USE: -1
     EXAMPLAR:
         SHIFT: 4
         SCALE: 0.05

@@ -124,12 +124,6 @@ def train(train_dataloader, model, optimizer, lr_scheduler):
     if not os.path.exists(cfg.PRUNING.SNAPSHOT_DIR):
         os.makedirs(cfg.PRUNING.SNAPSHOT_DIR)
     for epoch in range(cfg.PRUNING.START_EPOCH, cfg.PRUNING.EPOCHS):
-
-        for k, v in model.mask.items():
-            tb_writer.add_histogram(k, v, iter)
-        for k, v in model.mask.items():
-            tb_writer.add_histogram(k, v, iter)
-
         train_dataloader.dataset.shuffle()
         lr_scheduler.step(epoch)
         # log for lr
@@ -157,12 +151,12 @@ def train(train_dataloader, model, optimizer, lr_scheduler):
                 clip_grad_norm_(model.parameters(), cfg.PRUNING.GRAD_CLIP)
                 optimizer.step()
             # update the scores
-            if (epoch <= 10 and iter % 10 == 0) or (epoch > 10 and iter % 5 == 0):
-                model.update_mask(examplar_img, search_img, gt_cls, gt_delta, delta_weight)
-                for k, v in model.mask.items():
-                    tb_writer.add_histogram('mask.' + k, v, iter)
-                for k, v in model.mask_scores.items():
-                    tb_writer.add_histogram('mask_score.' + k, v, iter)
+            # if (epoch <= 10 and iter % 10 == 0) or (epoch > 10 and iter % 5 == 0):
+            #     model.update_mask(examplar_img, search_img, gt_cls, gt_delta, delta_weight)
+            #     for k, v in model.mask.items():
+            #         tb_writer.add_histogram('mask.' + k, v, iter)
+            #     for k, v in model.mask_scores.items():
+            #         tb_writer.add_histogram('mask_score.' + k, v, iter)
 
             batch_time = time.time() - begin
             batch_info = {}
@@ -181,6 +175,11 @@ def train(train_dataloader, model, optimizer, lr_scheduler):
                             average_meter.batch_time.avg,
                             cfg.PRUNING.EPOCHS * num_per_epoch)
             iter += 1
+        model.update_mask()
+        for k, v in model.mask.items():
+            tb_writer.add_histogram('mask.' + k, v, iter)
+        for k, v in model.mask_scores.items():
+            tb_writer.add_histogram('mask_score.' + k, v, iter)
         # save model
         state = {
             'model': model.state_dict(),
