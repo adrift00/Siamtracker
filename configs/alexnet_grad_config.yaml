@@ -13,14 +13,15 @@ GRAD:
     EPOCHS: 50
     LR: 0.001
     WEIGHT_DECAY: 0.0005
+    MOMENTUM: 0.9
     PRETRAIN_PATH: './snapshot/alexnet/checkpoint_e46.pth'
-    SNAPSHOT_DIR: './snapshot/grad_with_set'
-    LOG_DIR: './logs/alexnet_grad_with_set'
+    SNAPSHOT_DIR: './snapshot/grad_with_set1'
+    LOG_DIR: './logs/alexnet_grad_with_set1'
 
     KWARGS:
         input_channels: 256
         output_channels: 256
 
-    TRAIN_SIZE: 5
+    TRAIN_SIZE: 1
     TEST_SIZE: 3
     MEMORY_SIZE: 5

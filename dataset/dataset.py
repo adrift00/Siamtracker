@@ -389,6 +389,7 @@ class GradSubDataset(SubDataset):
         train_annos = [self.annos[video][trackid][train_frame] for train_frame in train_frames]
         test_annos = [self.annos[video][trackid][test_frame] for test_frame in test_frames]
         return (examplar_path, examplar_anno), (train_paths, train_annos), (test_paths, test_annos)
+
 class GradTrainDataset(TrainDataset):
     def __init__(self): # don't override the super init
         self.all_dataset = []

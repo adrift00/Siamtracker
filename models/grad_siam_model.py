@@ -45,7 +45,6 @@ class GradSiamModel(BaseSiamModel):
                 examplar = self.neck(examplar)
                 train_search = self.neck(train_search)
                 test_search = self.neck(test_search)
-            # examplar0.requires_grad_(True)
             examplar.requires_grad_(True)
             init_cls_losses = torch.zeros([train_search.size(0)]).cuda()
             init_loc_losses = torch.zeros([train_search.size(0)]).cuda()

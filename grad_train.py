@@ -8,7 +8,7 @@ import torch.nn as nn
 from tensorboardX import SummaryWriter
 from torch.nn.utils import clip_grad_norm_
 from torch.utils.data import DataLoader
-from torch.optim import Adam
+from torch.optim import Adam, SGD
 from dataset.dataset import GradTrainDataset
 from configs.config import cfg
 from utils.model_load import load_pretrain
@@ -46,7 +46,7 @@ def build_optimizer(model, current_epoch=0):
     trainable_param += [
         {'params': model.rpn.parameters(), 'lr': cfg.GRAD.LR * 0.1}
     ]
-    optimizer = Adam(trainable_param, weight_decay=cfg.GRAD.WEIGHT_DECAY)
+    optimizer = SGD(trainable_param, weight_decay=cfg.GRAD.WEIGHT_DECAY,momentum=cfg.GRAD.MOMENTUM)
     return optimizer
 
 
