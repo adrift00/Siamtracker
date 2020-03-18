@@ -55,6 +55,8 @@ def pruning_model(model):
             new_batchnorm = torch.nn.BatchNorm2d(num_features=out_channels)
             new_batchnorm.weight = torch.nn.Parameter(batchnorm.weight[out_mask], requires_grad=False)
             new_batchnorm.bias = torch.nn.Parameter(batchnorm.bias[out_mask], requires_grad=False)
+            new_batchnorm.running_mean=batchnorm.running_mean[out_mask]
+            new_batchnorm.running_var=batchnorm.running_var[out_mask]
             layer[idx + 1] = new_batchnorm
             if is_pruning:
                 last_mask = model.mask[state_name]
@@ -125,6 +127,8 @@ def pruning_model(model):
                     new_batchnorm = torch.nn.BatchNorm2d(num_features=out_channels)
                     new_batchnorm.weight = torch.nn.Parameter(batchnorm.weight[out_mask], requires_grad=False)
                     new_batchnorm.bias = torch.nn.Parameter(batchnorm.bias[out_mask], requires_grad=False)
+                    new_batchnorm.running_mean=batchnorm.running_mean[out_mask]
+                    new_batchnorm.running_var=batchnorm.running_var[out_mask]
                     block[idx + 1] = new_batchnorm
                     if is_pruning:
                         last_mask = model.mask[state_name]
@@ -175,6 +179,8 @@ def pruning_model(model):
                 new_batchnorm = torch.nn.BatchNorm2d(num_features=out_channels)
                 new_batchnorm.weight = torch.nn.Parameter(batchnorm.weight[out_mask], requires_grad=False)
                 new_batchnorm.bias = torch.nn.Parameter(batchnorm.bias[out_mask], requires_grad=False)
+                new_batchnorm.running_mean=batchnorm.running_mean[out_mask]
+                new_batchnorm.running_var=batchnorm.running_var[out_mask]
                 block[idx + 1] = new_batchnorm
                 if is_pruning:
                     last_mask[i] = model.mask[state_name]
@@ -261,8 +267,8 @@ def pruning_model(model):
             new_batchnorm = torch.nn.BatchNorm2d(num_features=out_channels)
             new_batchnorm.weight = torch.nn.Parameter(batchnorm.weight[out_mask], requires_grad=False)
             new_batchnorm.bias = torch.nn.Parameter(batchnorm.bias[out_mask], requires_grad=False)
-            new_batchnorm.running_mean = torch.nn.Parameter(batchnorm.running_mean[out_mask], requires_grad=False)
-            new_batchnorm.running_var = torch.nn.Parameter(batchnorm.running_var[out_mask], requires_grad=False)
+            new_batchnorm.running_mean = batchnorm.running_mean[out_mask]
+            new_batchnorm.running_var = batchnorm.running_var[out_mask]
             head[1] = new_batchnorm
             # second_conv
             m = head[3]
@@ -305,4 +311,5 @@ if __name__ == '__main__':
     for k, v in model.mask.items():
         print(k, v)
     model = pruning_model(model)
-    # torch.save(model.state_dict(), './snapshot/mobilenetv2_gdp/model_pruning.pth')
+
+    torch.save(model.state_dict(), './snapshot/mobilenetv2_gdp/model_pruning.pth')
