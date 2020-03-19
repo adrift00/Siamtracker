@@ -68,11 +68,11 @@ TRAIN:
 DATASET:
     NAMES:
         - 'VID'
-#        - 'COCO'
+        - 'COCO'
 #        - 'DET'
-        - 'YOUTUBEBB'
-    VID:
-        NUM_USE: -1
+#        - 'YOUTUBEBB'
+#    VID:
+#        NUM_USE: -1
     EXAMPLAR:
         SHIFT: 4
         SCALE: 0.05
@@ -92,7 +92,7 @@ DATASET:
     VIDEO_PER_EPOCH: -1
 
 PRUNING:
-    KEEP_RATE: 0.5
+    KEEP_RATE: 0.75
     BATCH_SIZE: 24
     BASE_LR: 0.001
     MOMENTUM: 0.9
