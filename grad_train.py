@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from torch.optim import Adam
 from dataset.dataset import TrainDataset
 from configs.config import cfg
-from utils.model_load import load_pretrain
+from utils.model_load import load_pretrain, restore_from
 from models import get_model
 from utils.log_helper import init_log, add_file_handler, print_speed
 from utils.misc import commit, describe
@@ -126,6 +126,10 @@ def main():
     # parametes want to optim
     optimizer = build_optimizer(model)
     dataloader = build_dataloader()
+    if cfg.GRAD.RESUME:
+        logger.info('resume from {}'.format(cfg.GRAD.RESUME_PATH))
+        model, optimizer, cfg.GRAD.START_EPOCH = restore_from(model, optimizer, cfg.GRAD.RESUME_PATH)
+        logger.info('resume done!')
     model.freeze_model()
     train(dataloader, optimizer, model)
 

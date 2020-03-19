@@ -210,6 +210,10 @@ def main():
     logger.info('load pretrain from {}.'.format(cfg.PRUNING.PRETRAIN_PATH))
     model = load_pretrain(model, cfg.PRUNING.PRETRAIN_PATH)
     logger.info('load pretrain done')
+    if cfg.PRUNING.RESUME:
+        logger.info('resume from {}'.format(cfg.PRUNING.RESUME_PATH))
+        model, optimizer, cfg.PRUNING.START_EPOCH = restore_from(model, optimizer, cfg.PRUNING.RESUME_PATH)
+        logger.info('resume done!')
     train(train_dataloader, model, optimizer, lr_scheduler)
 
 

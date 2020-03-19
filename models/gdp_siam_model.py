@@ -13,10 +13,6 @@ class GDPSiamModel(BaseSiamModel):
         self.create_mask()
 
     def forward(self, examplar, search, gt_cls, gt_loc, gt_loc_weight):
-        # compute the weight*mask
-        model_params = dict(self.named_parameters())
-        for k, mask in self.mask.items():
-            model_params[k].data.mul_(mask[:, None, None, None])
         # normal forward
         examplar = self.backbone(examplar)
         search = self.backbone(search)
@@ -100,6 +96,10 @@ class GDPSiamModel(BaseSiamModel):
                 self.mask[key][int(idx)] = 1
             else:
                 self.mask[key][int(idx)] = 0
+        # compute the weight*mask, only when update mask
+        model_params = dict(self.named_parameters())
+        for k, mask in self.mask.items():
+            model_params[k].data.mul_(mask[:, None, None, None])
 
 
 if __name__ == '__main__':

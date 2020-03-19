@@ -108,4 +108,8 @@ def restore_from(model, optimizer, ckpt_path):
     model.load_state_dict(ckpt_model_dict, strict=False)
     check_keys(optimizer, ckpt['optimizer'])
     optimizer.load_state_dict(ckpt['optimizer'])
+    # for pruning
+    if 'mask' in ckpt.keys() and 'mask_scores' in ckpt.keys():
+        model.mask=ckpt['mask']
+        model.mask_scores=ckpt['mask_scores']
     return model, optimizer, epoch

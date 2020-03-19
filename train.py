@@ -242,4 +242,4 @@ def main():
 
 if __name__ == '__main__':
     seed_torch(123456)
-    main()
+

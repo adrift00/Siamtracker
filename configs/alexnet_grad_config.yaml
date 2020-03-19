@@ -8,6 +8,9 @@ DATASET:
         NUM_USE: -1
 
 GRAD:
+    START_EPOCH: 0
+    RESUME: False
+    RESUME_PATH: ''
     BATCH_SIZE: 16
     EPOCHS: 50
     LR: 0.001

@@ -99,6 +99,8 @@ PRUNING:
     WEIGHT_DECAY: 0.0005
     EPOCHS: 20
     START_EPOCH: 0
+    RESUME: False
+    RESUME_PATH: ''
 
     LOG_DIR: './logs/mobilenetv2_gdp'
     SNAPSHOT_DIR: './snapshot/mobilenetv2_gdp'
