@@ -181,6 +181,7 @@ def main():
     base_model = get_model('GDPSiamModel')
     base_model = load_pretrain(base_model, args.snapshot)
     base_model = pruning_model(base_model).cuda().eval()
+    torch.save(base_model.state_dict(), './snapshot/mobilenetv2_gdp/model_pruning.pth')
 
     tracker = get_tracker(args.tracker, base_model)
     data_dir = os.path.join(cfg.TRACK.DATA_DIR, args.dataset)
