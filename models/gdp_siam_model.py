@@ -96,21 +96,19 @@ class GDPSiamModel(BaseSiamModel):
         # model_params = dict(self.named_parameters())
         # for k, mask in self.mask.items():
         #     model_params[k].data.mul_(mask[:, None, None, None])
-        model_params=dict(self.named_parameters())
-        pruned_params={k:model_params[k] for k in self.mask.keys()}
-        for i,(k,v) in enumerate(self.mask.items()):
-            self.mask_scores[k]=torch.sqrt(torch.pow(pruned_params[k],2).sum((1,2,3))).detach().cpu().numpy()
+        model_params = dict(self.named_parameters())
+        pruned_params = {k: model_params[k] for k in self.mask.keys()}
+        for i, (k, v) in enumerate(self.mask.items()):
+            self.mask_scores[k] = torch.sqrt(torch.pow(pruned_params[k], 2).sum((1, 2, 3))).detach().cpu().numpy()
 
-        for key,mask_score in self.mask_scores.items():
-            keep_num=int(len(mask_score)* cfg.PRUNING.KEEP_RATE)
-            sorted_idx=np.argsort(-mask_score) # reserve order, so times -1
-            self.mask[key][sorted_idx[:keep_num]]=1
-            self.mask[key][sorted_idx[keep_num:]]=0
+        for key, mask_score in self.mask_scores.items():
+            keep_num = int(len(mask_score) * cfg.PRUNING.KEEP_RATE)
+            sorted_idx = np.argsort(-mask_score)  # reserve order, so times -1
+            self.mask[key][sorted_idx[:keep_num]] = 1
+            self.mask[key][sorted_idx[keep_num:]] = 0
 
         for k, mask in self.mask.items():
             model_params[k].data.mul_(mask[:, None, None, None])
-
-
 
 
 if __name__ == '__main__':

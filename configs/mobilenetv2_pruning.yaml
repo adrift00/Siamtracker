@@ -92,7 +92,7 @@ DATASET:
     VIDEO_PER_EPOCH: -1
 
 PRUNING:
-    KEEP_RATE: 0.75
+    KEEP_RATE: 0.5
     BATCH_SIZE: 24
     BASE_LR: 0.001
     MOMENTUM: 0.9
@@ -102,8 +102,8 @@ PRUNING:
     RESUME: False
     RESUME_PATH: ''
 
-    LOG_DIR: './logs/mobilenetv2_sfp'
-    SNAPSHOT_DIR: './snapshot/mobilenetv2_sfp'
+    LOG_DIR: './logs/mobilenetv2_sfp_0_5'
+    SNAPSHOT_DIR: './snapshot/mobilenetv2_sfp_0_5'
     LOG_GRAD: False
     GRAD_CLIP: False
     PRETRAIN_PATH: './pretrained_models/siamrpn_mobi.pth'
