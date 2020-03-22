@@ -6,6 +6,19 @@ DATASET:
 
     VID:
         NUM_USE: -1
+    EXAMPLAR:
+        SHIFT: 0
+        SCALE: 0.05
+        BLUR: 0.0
+        FLIP: 0.0
+        COLOR: 1.0
+
+    SEARCH:
+        SHIFT: 0 # becuase want use grad, so the shift should be zero
+        SCALE: 0.18
+        BLUR: 0.2
+        FLIP: 0.0
+        COLOR: 1.0
 
 GRAD:
     BATCH_SIZE: 16
