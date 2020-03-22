@@ -110,6 +110,12 @@ class GDPSiamModel(BaseSiamModel):
         for k, mask in self.mask.items():
             model_params[k].data.mul_(mask[:, None, None, None])
 
+    def apply_mask(self):
+        model_params = dict(self.named_parameters())
+        for k, mask in self.mask.items():
+            model_params[k].data.mul_(mask[:, None, None, None])
+
+
 
 if __name__ == '__main__':
     cfg.merge_from_file('../configs/mobilenetv2_finetune.yaml')

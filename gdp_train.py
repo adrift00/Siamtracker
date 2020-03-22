@@ -123,6 +123,7 @@ def train(train_dataloader, model, optimizer, lr_scheduler):
     iter = 0
     if not os.path.exists(cfg.PRUNING.SNAPSHOT_DIR):
         os.makedirs(cfg.PRUNING.SNAPSHOT_DIR)
+    model.apply_mask() # apply the mask when resume, if start in 0 epoch, the mask are all 1
     for epoch in range(cfg.PRUNING.START_EPOCH, cfg.PRUNING.EPOCHS):
         train_dataloader.dataset.shuffle()
         lr_scheduler.step(epoch)
