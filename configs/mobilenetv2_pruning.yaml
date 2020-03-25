@@ -69,7 +69,7 @@ DATASET:
     NAMES:
         - 'VID'
         - 'COCO'
-#        - 'DET'
+        - 'DET'
 #        - 'YOUTUBEBB'
 #    VID:
 #        NUM_USE: -1
@@ -111,5 +111,24 @@ PRUNING:
         TYPE: 'step'
         KWARGS:
             start_lr: 0.001
+
+    FINETUNE:
+        BATCH_SIZE: 64
+        BASE_LR: 0.001
+        MOMENTUM: 0.9
+        WEIGHT_DECAY: 0.0005
+        EPOCHS: 20
+        START_EPOCH: 0
+        RESUME: False
+        RESUME_PATH: ''
+        LOG_DIR: './logs/mobilenetv2_sfp_0_5_finetune'
+        SNAPSHOT_DIR: './snapshot/mobilenetv2_sfp_0_5_finetune'
+        LOG_GRAD: False
+        GRAD_CLIP: False
+        PRETRAIN_PATH: './snapshot/mobilenetv2_sfp_0_5/checkpoint_e15.pth'
+        LR:
+            TYPE: 'step'
+            KWARGS:
+                start_lr: 0.001
 
 
