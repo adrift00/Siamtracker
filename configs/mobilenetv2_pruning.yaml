@@ -102,8 +102,8 @@ PRUNING:
     RESUME: False
     RESUME_PATH: ''
 
-    LOG_DIR: './logs/mobilenetv2_sfp_0_5'
-    SNAPSHOT_DIR: './snapshot/mobilenetv2_sfp_0_5'
+    LOG_DIR: './logs/mobilenetv2_gm_0_5'
+    SNAPSHOT_DIR: './snapshot/mobilenetv2_gm_0_5'
     LOG_GRAD: False
     GRAD_CLIP: False
     PRETRAIN_PATH: './pretrained_models/siamrpn_mobi.pth'
