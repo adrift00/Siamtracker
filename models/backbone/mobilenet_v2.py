@@ -94,8 +94,8 @@ class MobileNetV2(nn.Module):
         ]
         last_dilation = 1
         for idx, (t, c, n, s, d) in enumerate(self.interverted_residual_setting, start=1):
-            # out_channels = _make_divisible(c * width_mult, 4 if width_mult == 0.1 else 8)
-            out_channels=int(c*width_mult)
+            out_channels = _make_divisible(c * width_mult, 4 if width_mult == 0.1 else 8)
+            # out_channels=int(c*width_mult)
             bottleneck = []
             for i in range(n):
                 if i == 0:

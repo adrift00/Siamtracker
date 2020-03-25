@@ -1,6 +1,9 @@
+import cv2
 import numpy as np
 import torch
-from utils.bbox import delta2bbox, corner2center
+
+from dataset.augmentation import Augmentation
+from utils.bbox import delta2bbox, corner2center, center2corner, Corner
 from utils.anchor import AnchorGenerator, AnchorTarget
 from trackers.base_tracker import BaseTracker
 from utils.visual import show_img
@@ -23,6 +26,13 @@ class GradSiamRPN(BaseTracker):
         self.all_anchor = self.anchor_generator.generate_all_anchors(cfg.TRACK.INSTANCE_SIZE // 2, self.score_size)
         self.anchor_target = AnchorTarget(cfg.ANCHOR.SCALES, cfg.ANCHOR.RATIOS, cfg.ANCHOR.STRIDE,
                                           cfg.TRACK.INSTANCE_SIZE // 2, self.score_size)
+        self.search_aug = Augmentation(
+            cfg.DATASET.SEARCH.SHIFT,
+            cfg.DATASET.SEARCH.SCALE,
+            cfg.DATASET.SEARCH.BLUR,
+            cfg.DATASET.SEARCH.FLIP,
+            cfg.DATASET.SEARCH.COLOR
+        )
 
     def init(self, img, bbox):
         bbox_pos = bbox[0:2]  # cx,cy
@@ -33,6 +43,40 @@ class GradSiamRPN(BaseTracker):
         examplar = torch.tensor(self.examplar[np.newaxis, :], dtype=torch.float32).permute(0, 3, 1, 2).cuda()
         size_x = self._size_x(bbox_size)
         search = self.get_subwindow(img, bbox_pos, cfg.TRACK.INSTANCE_SIZE, size_x, self.channel_average)
+
+        def get_bbox(image, ori_bbox):
+            """
+            :param image:
+            :param ori_bbox: cx,cy,w,h
+            :return:
+            """
+            img_h, img_w = image.shape[:2]
+            w, h = ori_bbox[2], ori_bbox[3]
+            context_amount = 0.5
+            wc_z = w + context_amount * (w + h)
+            hc_z = h + context_amount * (w + h)
+            s_z = np.sqrt(wc_z * hc_z)
+            scale_z = cfg.TRAIN.EXAMPLER_SIZE / s_z
+            w = w * scale_z
+            h = h * scale_z
+            cx, cy = img_w // 2, img_h // 2
+            bbox = center2corner([cx, cy, w, h])
+            return Corner(*bbox)
+
+        bbox = get_bbox(search, bbox)
+
+        # vis_bbox = list(map(lambda x: int(x), bbox))
+        # cv2.rectangle(search, (vis_bbox[0], vis_bbox[1]), (vis_bbox[2], vis_bbox[3]), (0, 0, 255), 2)
+        # cv2.imwrite('search.png',search)
+
+        search, bbox= self.search_aug(search, bbox, cfg.TRACK.INSTANCE_SIZE)
+
+        # debug
+        # vis_bbox = list(map(lambda x: int(x), bbox))
+        # cv2.rectangle(search, (vis_bbox[0], vis_bbox[1]), (vis_bbox[2], vis_bbox[3]), (0, 0, 255), 2)
+        # cv2.imwrite('search.png',search)
+
+
         search = torch.from_numpy(search[np.newaxis, :].astype(np.float32)).permute(0, 3, 1, 2).cuda()
         gt_cls, gt_loc, gt_loc_weight = self.anchor_target(bbox)
         gt_cls, gt_loc, gt_loc_weight = [torch.from_numpy(x[np.newaxis, :]).cuda() for x in

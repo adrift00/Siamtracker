@@ -108,7 +108,6 @@ class GradSiamModel(BaseSiamModel):
         loc_loss = weight_l1_loss(pred_loc, gt_loc, gt_loc_weight)
         total_loss = cfg.TRAIN.CLS_WEIGHT * cls_loss + cfg.TRAIN.LOC_WEIGHT * loc_loss
         # backward for the grad
-        # examplar_grad = torch.autograd.grad(total_loss, self.examplar)[0] * 1000
         examplar_grad = torch.autograd.grad(total_loss, self.examplar)[0] * 1000
         self.examplar = self.examplar + self.grad_layer(examplar_grad)
 
