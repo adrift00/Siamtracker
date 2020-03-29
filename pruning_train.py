@@ -152,13 +152,6 @@ def train(train_dataloader, model, optimizer, lr_scheduler):
                     log_grads(model.module, tb_writer, iter)
                 clip_grad_norm_(model.parameters(), cfg.PRUNING.GRAD_CLIP)
                 optimizer.step()
-            # update the scores
-            # if (epoch <= 10 and iter % 10 == 0) or (epoch > 10 and iter % 5 == 0):
-            #     model.update_mask(examplar_img, search_img, gt_cls, gt_delta, delta_weight)
-            #     for k, v in model.mask.items():
-            #         tb_writer.add_histogram('mask.' + k, v, iter)
-            #     for k, v in model.mask_scores.items():
-            #         tb_writer.add_histogram('mask_score.' + k, v, iter)
 
             batch_time = time.time() - begin
             batch_info = {}

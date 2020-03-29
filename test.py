@@ -23,7 +23,7 @@ parser.add_argument('--video', default='', type=str, help='choose one special vi
 parser.add_argument('--vis', action='store_true', help='whether to visual')
 args = parser.parse_args()
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 torch.set_num_threads(1)  # use only one threads to test the real speed
 
 
@@ -178,10 +178,17 @@ def main():
     # base_model = get_model(model_name)
     # base_model = load_pretrain(base_model, args.snapshot).cuda().eval()
     # base_model = base_model.cuda().eval()
+
+    # base_model = get_model('GDPSiamModel')
+    # base_model = load_pretrain(base_model, args.snapshot)
+    # base_model = pruning_model(base_model).cuda().eval()
+    # torch.save(base_model.state_dict(), './snapshot/mobilenetv2_gdp/model_pruning.pth')
+
     base_model = get_model('GDPSiamModel')
-    base_model = load_pretrain(base_model, args.snapshot)
-    base_model = pruning_model(base_model).cuda().eval()
-    torch.save(base_model.state_dict(), './snapshot/mobilenetv2_gdp/model_pruning.pth')
+    base_model = load_pretrain(base_model, cfg.PRUNING.FINETUNE.PRETRAIN_PATH) # load the mask
+    base_model = pruning_model(base_model) # refine the model
+    base_model=load_pretrain(base_model,args.snapshot).cuda().eval() # load the finetune weight
+
 
     tracker = get_tracker(args.tracker, base_model)
     data_dir = os.path.join(cfg.TRACK.DATA_DIR, args.dataset)

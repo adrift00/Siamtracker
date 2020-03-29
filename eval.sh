@@ -1,0 +1,1 @@
+python eval.py --tracker SiamRPN/mobilenetv2/checkpoint_e20 --dataset VOT2018

@@ -80,7 +80,7 @@ def log_grads(model, tb_writer, tb_index):
 def build_optimizer_lr(model, current_epoch=0):
     trainable_param = []
     trainable_param += [{
-        'params': filter(lambda x: x.requires_grad, model.backbone.parameters()),
+        'params': model.backbone.parameters(),
         'lr': cfg.PRUNING.FINETUNE.BASE_LR
     }]
 
