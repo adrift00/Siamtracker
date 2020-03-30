@@ -3,11 +3,13 @@ META_ARC: "siamrpn_alex_dwxcorr"
 DATASET:
     NAMES:
         - 'VID'
+        - 'COCO'
+        - 'DET'
 
-    VID:
-        NUM_USE: -1
+#    VID:
+#        NUM_USE: -1
     EXAMPLAR:
-        SHIFT: 0
+        SHIFT: 4
         SCALE: 0.05
         BLUR: 0.0
         FLIP: 0.0
@@ -21,13 +23,13 @@ DATASET:
         COLOR: 1.0
 
 GRAD:
-    BATCH_SIZE: 16
+    BATCH_SIZE: 128
     EPOCHS: 50
     LR: 0.001
     WEIGHT_DECAY: 0.0005
     PRETRAIN_PATH: './snapshot/alexnet/checkpoint_e46.pth'
-    SNAPSHOT_DIR: './snapshot/grad_single_loss'
-    LOG_DIR: './logs/alexnet_grad_single_loss'
+    SNAPSHOT_DIR: './snapshot/grad_single_loss_multi_data'
+    LOG_DIR: './logs/alexnet_grad_single_loss_multi_data'
 
     KWARGS:
         input_channels: 256

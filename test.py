@@ -23,7 +23,7 @@ parser.add_argument('--video', default='', type=str, help='choose one special vi
 parser.add_argument('--vis', action='store_true', help='whether to visual')
 args = parser.parse_args()
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 torch.set_num_threads(1)  # use only one threads to test the real speed
 
 
