@@ -6,7 +6,7 @@ from models.base_siam_model import BaseSiamModel
 from utils.loss import select_cross_entropy_loss, weight_l1_loss
 
 
-class GDPSiamModel(BaseSiamModel):
+class PruningSiamModel(BaseSiamModel):
     def __init__(self):
         super().__init__()
         self.mask = {}
@@ -46,13 +46,12 @@ class GDPSiamModel(BaseSiamModel):
         idx = 3
         for i in range(7):  # 6 layers
             for j in range(repeat_times[i]):  # for n bottlenecks
-                for k in range(6):
+                for k in range(6): # the 6 params will be mask, because the last layer of every bottleneck will be added.
                     if len(backbone_param_values[idx + k].size()) == 1:  # skip the batchnorm
                         continue
                     if len(backbone_param_values[idx + k].size()) == 4 \
                             and backbone_param_values[idx + k].size(1) == 1:  # skip the depth-wise conv
                         continue
-                    # the 6 params will be mask, because the last layer of every bottleneck will be added.
                     self.mask['backbone.' + backbone_param_keys[idx + k]] = torch.ones(
                         backbone_param_values[idx + k].size(0)).cuda()
                 idx += 9
@@ -110,6 +109,6 @@ class GDPSiamModel(BaseSiamModel):
 
 if __name__ == '__main__':
     cfg.merge_from_file('../configs/mobilenetv2_finetune.yaml')
-    model = GDPSiamModel()
+    model = PruningSiamModel()
     for k, v in model.mask.items():
         print(k, v.size())

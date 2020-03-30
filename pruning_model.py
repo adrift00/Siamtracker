@@ -8,7 +8,7 @@ import torch
 from utils.log_helper import init_log, add_file_handler
 from utils.misc import commit
 from utils.model_load import load_pretrain
-from models.gdp_siam_model import GDPSiamModel
+from models.pruning_siam_model import PruningSiamModel
 from configs.config import cfg
 
 logger = logging.getLogger('global')
@@ -55,8 +55,8 @@ def pruning_model(model):
             new_batchnorm = torch.nn.BatchNorm2d(num_features=out_channels)
             new_batchnorm.weight = torch.nn.Parameter(batchnorm.weight[out_mask], requires_grad=False)
             new_batchnorm.bias = torch.nn.Parameter(batchnorm.bias[out_mask], requires_grad=False)
-            new_batchnorm.running_mean=batchnorm.running_mean[out_mask]
-            new_batchnorm.running_var=batchnorm.running_var[out_mask]
+            new_batchnorm.running_mean = batchnorm.running_mean[out_mask]
+            new_batchnorm.running_var = batchnorm.running_var[out_mask]
             layer[idx + 1] = new_batchnorm
             if is_pruning:
                 last_mask = model.mask[state_name]
@@ -127,8 +127,8 @@ def pruning_model(model):
                     new_batchnorm = torch.nn.BatchNorm2d(num_features=out_channels)
                     new_batchnorm.weight = torch.nn.Parameter(batchnorm.weight[out_mask], requires_grad=False)
                     new_batchnorm.bias = torch.nn.Parameter(batchnorm.bias[out_mask], requires_grad=False)
-                    new_batchnorm.running_mean=batchnorm.running_mean[out_mask]
-                    new_batchnorm.running_var=batchnorm.running_var[out_mask]
+                    new_batchnorm.running_mean = batchnorm.running_mean[out_mask]
+                    new_batchnorm.running_var = batchnorm.running_var[out_mask]
                     block[idx + 1] = new_batchnorm
                     if is_pruning:
                         last_mask = model.mask[state_name]
@@ -179,8 +179,8 @@ def pruning_model(model):
                 new_batchnorm = torch.nn.BatchNorm2d(num_features=out_channels)
                 new_batchnorm.weight = torch.nn.Parameter(batchnorm.weight[out_mask], requires_grad=False)
                 new_batchnorm.bias = torch.nn.Parameter(batchnorm.bias[out_mask], requires_grad=False)
-                new_batchnorm.running_mean=batchnorm.running_mean[out_mask]
-                new_batchnorm.running_var=batchnorm.running_var[out_mask]
+                new_batchnorm.running_mean = batchnorm.running_mean[out_mask]
+                new_batchnorm.running_var = batchnorm.running_var[out_mask]
                 block[idx + 1] = new_batchnorm
                 if is_pruning:
                     last_mask[i] = model.mask[state_name]
@@ -304,7 +304,7 @@ if __name__ == '__main__':
                          logging.INFO)
     logger.info("Version Information: \n{}\n".format(commit()))
     logger.info("config \n{}".format(json.dumps(cfg, indent=4)))
-    model = GDPSiamModel()
+    model = PruningSiamModel()
     model = load_pretrain(model, args.snapshot)
     print(model.mask_scores)
 

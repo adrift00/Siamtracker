@@ -4,7 +4,7 @@ import cv2
 import logging
 import torch
 
-from model_pruning import pruning_model
+from pruning_model import pruning_model
 from toolkit.datasets import get_dataset
 from utils.model_load import load_pretrain
 from models import get_model

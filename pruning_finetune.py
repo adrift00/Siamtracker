@@ -13,13 +13,13 @@ from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 from configs.config import cfg
 from dataset.dataset import TrainDataset
-from models.gdp_siam_model import GDPSiamModel
+from models.pruning_siam_model import PruningSiamModel
 from utils.log_helper import init_log, add_file_handler, print_speed
 from utils.lr_scheduler import build_lr_scheduler
 from utils.misc import commit, describe
 from utils.model_load import load_pretrain, restore_from
 from utils.average_meter import AverageMeter
-from model_pruning import pruning_model
+from pruning_model import pruning_model
 
 logger = logging.getLogger('global')
 
@@ -192,7 +192,7 @@ def main():
     logger.info("config \n{}".format(json.dumps(cfg, indent=4)))
 
     train_dataloader = build_data_loader()
-    model = GDPSiamModel()
+    model = PruningSiamModel()
     # load model from the pruning model
     logger.info('load pretrain from {}.'.format(cfg.PRUNING.FINETUNE.PRETRAIN_PATH))
     model = load_pretrain(model, cfg.PRUNING.FINETUNE.PRETRAIN_PATH)

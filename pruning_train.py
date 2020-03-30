@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 from configs.config import cfg
 from dataset.dataset import TrainDataset
-from models.gdp_siam_model import GDPSiamModel
+from models.pruning_siam_model import PruningSiamModel
 from utils.log_helper import init_log, add_file_handler, print_speed
 from utils.lr_scheduler import build_lr_scheduler
 from utils.misc import commit, describe
@@ -200,7 +200,7 @@ def main():
     logger.info("config \n{}".format(json.dumps(cfg, indent=4)))
 
     train_dataloader = build_data_loader()
-    model = GDPSiamModel().cuda().train()
+    model = PruningSiamModel().cuda().train()
     optimizer, lr_scheduler = build_optimizer_lr(model, cfg.PRUNING.START_EPOCH)
     logger.info('load pretrain from {}.'.format(cfg.PRUNING.PRETRAIN_PATH))
     model = load_pretrain(model, cfg.PRUNING.PRETRAIN_PATH)
