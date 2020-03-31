@@ -16,186 +16,77 @@ logger = logging.getLogger('global')
 
 def pruning_model(model):
     # backbone
-    last_mask = None
     # layer0
     layer_name = 'layer0'
     layer = getattr(model.backbone, layer_name)
-    for idx, m in enumerate(layer):  # layer is a Sequence
-        if isinstance(m, torch.nn.Conv2d):
-            is_pruning = False
-            in_channels, out_channels = m.in_channels, m.out_channels
-            if not last_mask is None:
-                in_channels = int(last_mask.sum().item())
-            state_name = 'backbone.{}.{}.weight'.format(layer_name, idx)
-            if state_name in model.mask.keys():  # modify the conv kernel which is pruned
-                is_pruning = True
-                out_channels = int(model.mask[state_name].sum().item())
-            new_conv = torch.nn.Conv2d(
-                in_channels=in_channels,
-                out_channels=out_channels,
-                kernel_size=m.kernel_size,
-                stride=m.stride,
-                padding=m.padding,
-                dilation=m.dilation,
-                bias=False if m.bias is None else True,
-            )
-            # copy the new weight
-            if in_channels == m.in_channels:
-                in_mask = torch.ones(in_channels).cuda() == 1
-            else:
-                in_mask = last_mask == 1
-            if out_channels == m.out_channels:
-                out_mask = torch.ones(out_channels).cuda() == 1
-            else:
-                out_mask = model.mask[state_name] == 1
-            new_conv.weight = torch.nn.Parameter(m.weight[out_mask, :, :, :][:, in_mask, :, :], requires_grad=False)
-            layer[idx] = new_conv
-            # modify the relative batchnorm
-            batchnorm = layer[idx + 1]
-            new_batchnorm = torch.nn.BatchNorm2d(num_features=out_channels)
-            new_batchnorm.weight = torch.nn.Parameter(batchnorm.weight[out_mask], requires_grad=False)
-            new_batchnorm.bias = torch.nn.Parameter(batchnorm.bias[out_mask], requires_grad=False)
-            new_batchnorm.running_mean = batchnorm.running_mean[out_mask]
-            new_batchnorm.running_var = batchnorm.running_var[out_mask]
-            layer[idx + 1] = new_batchnorm
-            if is_pruning:
-                last_mask = model.mask[state_name]
-            else:
-                last_mask = None
-
+    last_mask=(torch.ones(layer[0].in_channels)==1)
+    state_name = 'backbone.{}.{}.weight'.format(layer_name, 0)
+    if state_name in model.mask.keys():  # modify the conv kernel which is pruned
+        prune_mask=model.mask[state_name]==1
+    else:
+        prune_mask=torch.ones(layer[0].out_channels)==1
+    layer[0].weight.data=layer[0].weight[prune_mask,:,:,:][:,last_mask,:,:].clone()
+    # modify the relative batchnorm
+    layer[1].weight.data = layer[1].weight[prune_mask].clone()
+    layer[1].bias.data = layer[1].bias[prune_mask].clone()
+    layer[1].running_mean.data = layer[1].running_mean[prune_mask].clone()
+    layer[1].running_var.data = layer[1].running_var[prune_mask].clone()
+    last_mask=prune_mask
     # layer1-7
     for i in range(1, 8):  # for layer
         layer_name = 'layer{}'.format(i)
         layer = getattr(model.backbone, layer_name)
         for block_idx, block in enumerate(layer):  # for every block in the layer
-            idx = 0
             block = block.conv
-            for idx, m in enumerate(block):  # the block has attr: conv, conv is Squential
-                if isinstance(m, torch.nn.Conv2d):
-                    is_pruning = False
-                    is_depthwise = False
-                    in_channels, out_channels = m.in_channels, m.out_channels
-                    if not last_mask is None:
-                        in_channels = int(last_mask.sum().item())
-                    state_name = 'backbone.{}.{}.conv.{}.weight'.format(layer_name, block_idx, idx)
-                    if state_name in model.mask.keys():  # modify the conv kernel which is pruned
-                        is_pruning = True
-                        out_channels = int(model.mask[state_name].sum().item())
-                    if m.groups == 1:
-                        new_conv = torch.nn.Conv2d(
-                            in_channels=in_channels,
-                            out_channels=out_channels,
-                            kernel_size=m.kernel_size,
-                            stride=m.stride,
-                            padding=m.padding,
-                            dilation=m.dilation,
-                            bias=False if m.bias is None else True
-                        )
-                    else:
-                        is_depthwise = True
-                        out_channels = in_channels
-                        new_conv = torch.nn.Conv2d(
-                            in_channels=in_channels,
-                            out_channels=out_channels,  # depth-wise the output channel depend on the inputchanel
-                            kernel_size=m.kernel_size,
-                            stride=m.stride,
-                            padding=m.padding,
-                            dilation=m.dilation,
-                            bias=False if m.bias is None else False,
-                            groups=in_channels
-                        )
-                    # copy the new weight
-                    if in_channels == m.in_channels:
-                        in_mask = torch.ones(in_channels).cuda() == 1
-                    else:
-                        in_mask = last_mask == 1
-                    if out_channels == m.out_channels:
-                        out_mask = torch.ones(out_channels).cuda() == 1
-                    elif is_depthwise:
-                        out_mask = in_mask
-                    else:
-                        out_mask = model.mask[state_name] == 1
-                    if not is_depthwise:
-                        new_conv.weight = torch.nn.Parameter(m.weight[out_mask, :, :, :][:, in_mask, :, :],
-                                                             requires_grad=False)
-                    else:
-                        new_conv.weight = torch.nn.Parameter(m.weight[in_mask, :, :, :], requires_grad=False)
+            state_name = 'backbone.{}.{}.conv.{}.weight'.format(layer_name, block_idx, 0)
+            if state_name in model.mask.keys():
+                prune_mask=model.mask[state_name]==1
+            # point wise
+            block[0].weight.data=block[0].weight[prune_mask,:,:,:][:,last_mask,:,:].clone()
+            block[1].weight.data = block[1].weight[prune_mask].clone()
+            block[1].bias.data = block[1].bias[prune_mask].clone()
+            block[1].running_mean.data = block[1].running_mean[prune_mask].clone()
+            block[1].running_var.data = block[1].running_var[prune_mask].clone()
+            # deep wise
+            block[3].weight.data=block[3].weight[prune_mask,:,:,:].clone()
+            block[3].groups=prune_mask.sum()
+            block[4].weight.data = block[4].weight[prune_mask].clone()
+            block[4].bias.data = block[4].bias[prune_mask].clone()
+            block[4].running_mean.data = block[4].running_mean[prune_mask].clone()
+            block[4].running_var.data = block[4].running_var[prune_mask].clone()
+            # point wise
+            block[6].weight.data=block[6].weight[:,prune_mask,:,:].clone()
+            block[7].weight.data = block[7].weight[:].clone()
+            block[7].bias.data = block[7].bias[:].clone()
+            block[7].running_mean.data = block[7].running_mean[:].clone()
+            block[7].running_var.data = block[7].running_var[:].clone()
+            last_mask=torch.ones(block[-1].weight.size(0))==1
 
-                    block[idx] = new_conv
-                    # modify the relative batchnorm
-                    batchnorm = block[idx + 1]
-                    new_batchnorm = torch.nn.BatchNorm2d(num_features=out_channels)
-                    new_batchnorm.weight = torch.nn.Parameter(batchnorm.weight[out_mask], requires_grad=False)
-                    new_batchnorm.bias = torch.nn.Parameter(batchnorm.bias[out_mask], requires_grad=False)
-                    new_batchnorm.running_mean = batchnorm.running_mean[out_mask]
-                    new_batchnorm.running_var = batchnorm.running_var[out_mask]
-                    block[idx + 1] = new_batchnorm
-                    if is_pruning:
-                        last_mask = model.mask[state_name]
-                    elif is_depthwise:
-                        last_mask = last_mask
-                    else:
-                        last_mask = None
     # for neck
-    last_mask = [None, None, None]  # None or not?
     branch_name = ['downsample2', 'downsample3', 'downsample4']
     for i in range(3):  # three branch
         block = getattr(model.neck, branch_name[i])
         block = getattr(block, 'downsample')
-        for idx, m in enumerate(block):
-            if isinstance(m, torch.nn.Conv2d):
-                is_pruning = False
-                in_channels, out_channels = m.in_channels, m.out_channels
-                if not last_mask[i] is None:
-                    in_channels = int(last_mask[i].sum().item())
-                state_name = 'neck.{}.downsample.{}.weight'.format(branch_name[i], idx)
-                if state_name in model.mask.keys():  # modify the conv kernel which is pruned
-                    is_pruning = True
-                    out_channels = int(model.mask[state_name].sum().item())
-                new_conv = torch.nn.Conv2d(
-                    in_channels=in_channels,
-                    out_channels=out_channels,
-                    kernel_size=m.kernel_size,
-                    stride=m.stride,
-                    padding=m.padding,
-                    dilation=m.dilation,
-                    bias=False if m.bias is None else True,
-                )
-                # copy the new weight
-                if in_channels == m.in_channels:
-                    in_mask = torch.ones(in_channels).cuda() == 1
-                else:
-                    in_mask = last_mask[i] == 1
-                if out_channels == m.out_channels:
-                    out_mask = torch.ones(out_channels).cuda() == 1
-                else:
-                    out_mask = model.mask[state_name] == 1
-                new_conv.weight = torch.nn.Parameter(m.weight[out_mask, :, :, :][:, in_mask, :, :], requires_grad=False)
-                block[idx] = new_conv
-                # modify the relative batchnorm
-                if idx + 1 == len(block):
-                    continue
-                batchnorm = block[idx + 1]
-                new_batchnorm = torch.nn.BatchNorm2d(num_features=out_channels)
-                new_batchnorm.weight = torch.nn.Parameter(batchnorm.weight[out_mask], requires_grad=False)
-                new_batchnorm.bias = torch.nn.Parameter(batchnorm.bias[out_mask], requires_grad=False)
-                new_batchnorm.running_mean = batchnorm.running_mean[out_mask]
-                new_batchnorm.running_var = batchnorm.running_var[out_mask]
-                block[idx + 1] = new_batchnorm
-                if is_pruning:
-                    last_mask[i] = model.mask[state_name]
-                else:
-                    last_mask[i] = None
-            #     idx += 1
-            # elif isinstance(m, torch.nn.BatchNorm2d):
-            #     idx += 1
+        state_name='neck.{}.downsample.{}.weight'.format(branch_name[i], 0)
+        if state_name in model.mask.keys():  # modify the conv kernel which is pruned
+            prune_mask=model.mask[state_name]==1
+        else:
+            prune_mask=torch.ones(block[0].out_channels)==1
+        last_mask=(torch.ones(block[0].in_channels)==1)
+        block[0].weight.data=block[0].weight[prune_mask,:,:,:][:,last_mask,:,:].clone()
+        # modify the relative batchnorm
+        block[1].weight.data = block[1].weight[prune_mask].clone()
+        block[1].bias.data = block[1].bias[prune_mask].clone()
+        block[1].running_mean.data = block[1].running_mean[prune_mask].clone()
+        block[1].running_var.data = block[1].running_var[prune_mask].clone()
+
     # for rpn
     branchs = ['cls', 'loc']
     head_names = ['head2', 'head3', 'head4']
-    neck_last_mask = [
-        model.mask['neck.downsample2.downsample.0.weight'],
-        model.mask['neck.downsample3.downsample.0.weight'],
-        model.mask['neck.downsample4.downsample.0.weight']
+    last_masks = [
+        model.mask['neck.downsample2.downsample.0.weight']==1,
+        model.mask['neck.downsample3.downsample.0.weight']==1,
+        model.mask['neck.downsample4.downsample.0.weight']==1
     ]
     for branch in branchs:
         for i, head_name in enumerate(head_names):
@@ -203,89 +94,39 @@ def pruning_model(model):
             head = getattr(model.rpn, head_name)
             # kernel
             block = getattr(head, branch).conv_kernel
-            m = block[0]
-            in_channels, out_channels = m.in_channels, m.out_channels
-            if not neck_last_mask[i] is None:
-                in_channels = int(neck_last_mask[i].sum().item())
-            new_conv = torch.nn.Conv2d(
-                in_channels=in_channels,
-                out_channels=out_channels,
-                kernel_size=m.kernel_size,
-                stride=m.stride,
-                padding=m.padding,
-                dilation=m.dilation,
-                bias=False if m.bias is None else True,
-            )
-            # copy the new weight
-            in_mask = neck_last_mask[i] == 1
-            new_conv.weight = torch.nn.Parameter(m.weight[:, in_mask, :, :], requires_grad=False)
-            block[0] = new_conv
+            last_mask=last_masks[i]
+            block[0].weight.data=block[0].weight[:,last_mask,:,:].clone()
+            # modify the relative batchnorm
+            block[1].weight.data = block[1].weight[:].clone()
+            block[1].bias.data = block[1].bias[:].clone()
+            block[1].running_mean.data = block[1].running_mean[:].clone()
+            block[1].running_var.data = block[1].running_var[:].clone()
             # search
             block = getattr(head, branch).conv_search
-            m = block[0]
-            in_channels, out_channels = m.in_channels, m.out_channels
-            if not neck_last_mask[i] is None:
-                in_channels = int(neck_last_mask[i].sum().item())
-            new_conv = torch.nn.Conv2d(
-                in_channels=in_channels,
-                out_channels=out_channels,
-                kernel_size=m.kernel_size,
-                stride=m.stride,
-                padding=m.padding,
-                dilation=m.dilation,
-                bias=False if m.bias is None else True,
-            )
-            # copy the new weight
-            in_mask = neck_last_mask[i] == 1
-            new_conv.weight = torch.nn.Parameter(m.weight[:, in_mask, :, :], requires_grad=False)
-            block[0] = new_conv
+            last_mask=last_masks[i]
+            block[0].weight.data=block[0].weight[:,last_mask,:,:].clone()
+            # modify the relative batchnorm
+            block[1].weight.data = block[1].weight[:].clone()
+            block[1].bias.data = block[1].bias[:].clone()
+            block[1].running_mean.data = block[1].running_mean[:].clone()
+            block[1].running_var.data = block[1].running_var[:].clone()
 
             # frist conv
             head = getattr(model.rpn, head_name)
-            head = getattr(head, branch).head
+            block = getattr(head, branch).head
             state_name = 'rpn.{}.{}.head.{}.weight'.format(head_name, branch, 0)
-            m = head[0]
-            in_channels, out_channels = m.in_channels, m.out_channels
-            if state_name in model.mask.keys():
-                out_channels = int(model.mask[state_name].sum().item())
-            new_conv = torch.nn.Conv2d(
-                in_channels=in_channels,
-                out_channels=out_channels,
-                kernel_size=m.kernel_size,
-                stride=m.stride,
-                padding=m.padding,
-                dilation=m.dilation,
-                bias=False if m.bias is None else True,
-            )
-            # copy the new weight
-            out_mask = model.mask[state_name] == 1
-            new_conv.weight = torch.nn.Parameter(m.weight[out_mask, :, :, :], requires_grad=False)
-            head[0] = new_conv
-            last_mask = model.mask[state_name]
-            # batch_norm
-            batchnorm = head[1]
-            new_batchnorm = torch.nn.BatchNorm2d(num_features=out_channels)
-            new_batchnorm.weight = torch.nn.Parameter(batchnorm.weight[out_mask], requires_grad=False)
-            new_batchnorm.bias = torch.nn.Parameter(batchnorm.bias[out_mask], requires_grad=False)
-            new_batchnorm.running_mean = batchnorm.running_mean[out_mask]
-            new_batchnorm.running_var = batchnorm.running_var[out_mask]
-            head[1] = new_batchnorm
-            # second_conv
-            m = head[3]
-            in_channels = int(last_mask.sum().item())
-            new_conv = torch.nn.Conv2d(
-                in_channels=in_channels,
-                out_channels=m.out_channels,
-                kernel_size=m.kernel_size,
-                stride=m.stride,
-                padding=m.padding,
-                dilation=m.dilation,
-                bias=False if m.bias is None else True,
-            )
-            # copy the new weight
-            in_mask = (last_mask == 1)
-            new_conv.weight = torch.nn.Parameter(m.weight[:, in_mask, :, :], requires_grad=False)
-            head[3] = new_conv
+            if state_name in model.mask.keys():  # modify the conv kernel which is pruned
+                prune_mask=model.mask[state_name]==1
+            else:
+                prune_mask=torch.ones(block[0].out_channels)==1
+            block[0].weight.data=block[0].weight[prune_mask,:,:,:].clone()
+            # modify the relative batchnorm
+            block[1].weight.data = block[1].weight[prune_mask].clone()
+            block[1].bias.data = block[1].bias[prune_mask].clone()
+            block[1].running_mean.data = block[1].running_mean[prune_mask].clone()
+            block[1].running_var.data = block[1].running_var[prune_mask].clone()
+            # second conv
+            block[3].weight.data=block[3].weight[:,prune_mask,:,:].clone()
     return model
 
 
