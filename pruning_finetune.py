@@ -19,7 +19,7 @@ from utils.lr_scheduler import build_lr_scheduler
 from utils.misc import commit, describe
 from utils.model_load import load_pretrain, restore_from
 from utils.average_meter import AverageMeter
-from pruning_model import pruning_model
+from pruning_model import prune_model
 
 logger = logging.getLogger('global')
 
@@ -198,7 +198,7 @@ def main():
     model = load_pretrain(model, cfg.PRUNING.FINETUNE.PRETRAIN_PATH)
     logger.info('load pretrain done')
     logger.info('begin to pruning the model')
-    model = pruning_model(model).cuda().train()
+    model = prune_model(model).cuda().train()
     logger.info('pruning finished!')
 
     optimizer, lr_scheduler = build_optimizer_lr(model, cfg.PRUNING.FINETUNE.START_EPOCH)

@@ -4,7 +4,7 @@ import cv2
 import logging
 import torch
 
-from pruning_model import pruning_model
+from pruning_model import prune_model
 from toolkit.datasets import get_dataset
 from utils.model_load import load_pretrain
 from models import get_model
@@ -186,7 +186,7 @@ def main():
 
     base_model = get_model('GDPSiamModel')
     base_model = load_pretrain(base_model, cfg.PRUNING.FINETUNE.PRETRAIN_PATH) # load the mask
-    base_model = pruning_model(base_model) # refine the model
+    base_model = prune_model(base_model) # refine the model
     base_model=load_pretrain(base_model,args.snapshot).cuda().eval() # load the finetune weight
 
 
