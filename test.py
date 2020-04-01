@@ -176,8 +176,9 @@ def main():
     else:
         raise Exception('tracker is valid')
     base_model = get_model(model_name)
-    base_model = load_pretrain(base_model, args.snapshot).cuda().eval()
+    base_model = load_pretrain(base_model, args.snapshot)
     base_model = base_model.cuda().eval()
+    base_model.freeze_model()
     # base_model = get_model('GDPSiamModel')
     # base_model = load_pretrain(base_model, args.snapshot)
     # base_model = pruning_model(base_model).cuda().eval()

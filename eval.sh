@@ -1,1 +1,1 @@
-python eval.py --tracker GradSiamRPN/alexnet/checkpoint_e21 --dataset VOT2016
+python eval.py --tracker GradSiamRPN/alexnet/checkpoint_e7 --dataset VOT2018

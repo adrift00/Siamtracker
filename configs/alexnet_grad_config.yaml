@@ -9,14 +9,14 @@ DATASET:
 #    VID:
 #        NUM_USE: -1
     EXAMPLAR:
-        SHIFT: 4
+        SHIFT: 0
         SCALE: 0.05
         BLUR: 0.0
         FLIP: 0.0
         COLOR: 1.0
 
     SEARCH:
-        SHIFT: 64 # becuase want use grad, so the shift should be zero
+        SHIFT: 0 # becuase want use grad, so the shift should be zero
         SCALE: 0.18
         BLUR: 0.2
         FLIP: 0.0
@@ -28,8 +28,8 @@ GRAD:
     LR: 0.001
     WEIGHT_DECAY: 0.0005
     PRETRAIN_PATH: './snapshot/alexnet/checkpoint_e46.pth'
-    SNAPSHOT_DIR: './snapshot/grad_single_loss_multi_data'
-    LOG_DIR: './logs/alexnet_grad_single_loss_multi_data'
+    SNAPSHOT_DIR: './snapshot/grad_single_loss_multi_data_zero_shift'
+    LOG_DIR: './logs/alexnet_grad_single_loss_multi_data_zero_shift'
 
     KWARGS:
         input_channels: 256
