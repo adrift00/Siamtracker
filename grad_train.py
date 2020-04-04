@@ -9,7 +9,7 @@ from tensorboardX import SummaryWriter
 from torch.nn.utils import clip_grad_norm_
 from torch.utils.data import DataLoader
 from torch.optim import Adam
-from dataset.dataset import TrainDataset
+from dataset.dataset import GradTrainDataset
 from configs.config import cfg
 from utils.model_load import load_pretrain, restore_from
 from models import get_model
@@ -22,12 +22,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--cfg", default="", type=str, help="which config file to use")
 args = parser.parse_args()
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
 def build_dataloader():
     logger.info("building datalaoder!")
-    grad_dataset = TrainDataset()
+    grad_dataset = GradTrainDataset()
     graph_dataloader = DataLoader(grad_dataset, batch_size=cfg.GRAD.BATCH_SIZE, shuffle=False)
     return graph_dataloader
 
@@ -43,9 +43,9 @@ def build_optimizer(model, current_epoch=0):
     trainable_param += [
         {"params": model.grad_layer.parameters(), "lr": cfg.GRAD.LR},  # TODO: may be can be optimized
     ]
-    trainable_param += [
-        {'params': model.rpn.parameters(), 'lr': cfg.GRAD.LR * 0.1}
-    ]
+    # trainable_param += [
+    #     {'params': model.rpn.parameters(), 'lr': cfg.GRAD.LR * 0.1}
+    # ]
     optimizer = Adam(trainable_param, weight_decay=cfg.GRAD.WEIGHT_DECAY)
     return optimizer
 
@@ -61,13 +61,21 @@ def train(dataloader, optimizer, model):
         begin_time = time.time()
         for data in dataloader:
             examplar_img = data['examplar_img'].cuda()
-            search_img = data['search_img'].cuda()
-            gt_cls = data['gt_cls'].cuda()
-            gt_delta = data['gt_delta'].cuda()
-            delta_weight = data['delta_weight'].cuda()
+
+            train_search_img = data['train_search_img'].cuda()
+            train_gt_cls = data['train_gt_cls'].cuda()
+            train_gt_delta = data['train_gt_delta'].cuda()
+            train_delta_weight = data['train_delta_weight'].cuda()
+
+            test_search_img = data['test_search_img'].cuda()
+            test_gt_cls = data['test_gt_cls'].cuda()
+            test_gt_delta = data['test_gt_delta'].cuda()
+            test_delta_weight = data['test_delta_weight'].cuda()
             data_time = time.time() - begin_time
 
-            losses = model.forward(examplar_img, search_img, gt_cls, gt_delta, delta_weight)
+            losses = model.forward(examplar_img,
+                                   train_search_img, train_gt_cls, train_gt_delta, train_delta_weight,
+                                   test_search_img, test_gt_cls, test_gt_delta, test_delta_weight)
             cls_loss = losses['cls_loss']
             loc_loss = losses['loc_loss']
             loss = losses['total_loss']

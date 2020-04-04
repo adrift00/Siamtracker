@@ -357,6 +357,99 @@ class MetaTrainDataset(TrainDataset):
     def __len__(self):
         return self.num
 
+
+class GradTrainDataset(TrainDataset):
+    def __init__(self): # don't override the super init
+        self.all_dataset = []
+        self.num = 0
+        start_idx = 0
+        for name in cfg.DATASET.NAMES:
+            sub_cfg = getattr(cfg.DATASET, name)
+            sub_dataset = SubDataset(name,
+                                     sub_cfg.DATA_DIR,
+                                     sub_cfg.ANNO_FILE,
+                                     sub_cfg.FRAME_RANGE,
+                                     start_idx,
+                                     sub_cfg.NUM_USE)
+            sub_dataset.log()
+            self.all_dataset.append(sub_dataset)
+            start_idx += sub_dataset.num
+            self.num += sub_dataset.num_use
+        # self.num = cfg.DATASET.VIDEO_PER_EPOCH if cfg.DATASET.VIDEO_PER_EPOCH > 0 else self.num
+        self.anchor_target = AnchorTarget(cfg.ANCHOR.SCALES, cfg.ANCHOR.RATIOS, cfg.ANCHOR.STRIDE,
+                                          cfg.TRAIN.SEARCH_SIZE // 2, cfg.TRAIN.OUTPUT_SIZE)
+        self.template_aug = Augmentation(
+            cfg.DATASET.EXAMPLAR.SHIFT,
+            cfg.DATASET.EXAMPLAR.SCALE,
+            cfg.DATASET.EXAMPLAR.BLUR,
+            cfg.DATASET.EXAMPLAR.FLIP,
+            cfg.DATASET.EXAMPLAR.COLOR
+        )
+        self.search_aug = Augmentation(
+            cfg.DATASET.SEARCH.SHIFT,
+            cfg.DATASET.SEARCH.SCALE,
+            cfg.DATASET.SEARCH.BLUR,
+            cfg.DATASET.SEARCH.FLIP,
+            cfg.DATASET.SEARCH.COLOR
+        )
+    def __getitem__(self, idx):
+        idx = self.pick[idx]
+        sub_dataset, idx = self._find_dataset(idx)
+        gray = cfg.DATASET.GRAY and cfg.DATASET.GRAY > np.random.random()
+        neg = cfg.DATASET.NEG and cfg.DATASET.NEG > np.random.random()
+        if neg:
+            examplar = sub_dataset.get_random_target(idx)
+            search = np.random.choice(self.all_dataset).get_random_target()
+        else:
+            examplar, search = sub_dataset.get_postive_pair(idx)
+        examplar_img = cv2.imread(examplar[0])
+        search_img = cv2.imread(search[0])
+
+        examplar_bbox = self.get_bbox(examplar_img, examplar[1])
+        search_bbox = self.get_bbox(search_img, search[1])  # bbox: x1,y1,x2,y2
+
+        train_search_img,train_search_bbox=self.search_aug(examplar_img,
+                                                           examplar_bbox,
+                                                           cfg.TRAIN.SEARCH_SIZE,
+                                                           gray=gray)
+        examplar_img, examplar_bbox = self.template_aug(examplar_img,
+                                                        examplar_bbox,
+                                                        cfg.TRAIN.EXAMPLER_SIZE,
+                                                        gray=gray)
+        test_search_img, test_search_bbox = self.search_aug(search_img,
+                                                  search_bbox,
+                                                  cfg.TRAIN.SEARCH_SIZE,
+                                                  gray=gray)
+        # debug
+        # print('template', examplar[0])
+        # print('search', search[0])
+        # pred_bbox = search_bbox
+        # pred_bbox = list(map(lambda x: int(x), pred_bbox))
+        # cv2.rectangle(search_img, (pred_bbox[0], pred_bbox[1]), (pred_bbox[2], pred_bbox[3]), (0, 0, 255), 2)
+        # cv2.imwrite('search.jpg', search_img.astype(np.uint8))
+        #
+        train_gt_cls, train_gt_delta, train_delta_weight = self.anchor_target(train_search_bbox, neg)
+        examplar_img = examplar_img.transpose((2, 0, 1)).astype(np.float32)  # NOTE: set as c,h,w and type=float32
+        train_search_img = train_search_img.transpose((2, 0, 1)).astype(np.float32)
+        #
+        test_gt_cls, test_gt_delta, test_delta_weight = self.anchor_target(test_search_bbox, neg)
+        test_search_img = test_search_img.transpose((2, 0, 1)).astype(np.float32)
+        return {
+            'examplar_img': examplar_img,
+            'train_search_img': train_search_img,
+            'test_search_img': test_search_img,
+            'train_gt_cls': train_gt_cls,
+            'train_gt_delta': train_gt_delta,
+            'train_delta_weight': train_delta_weight,
+            'test_gt_cls': test_gt_cls,
+            'test_gt_delta': test_gt_delta,
+            'test_delta_weight': test_delta_weight
+        }
+
+
+
+
+
 # class GraphDataset(MetaDataset):
 #
 #     def __getitem__(self, idx):
