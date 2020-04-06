@@ -52,12 +52,12 @@ class BaseSiamModel(nn.Module):
 
 
     # for model conveter
-    # @torch.no_grad()
-    # def forward(self, examplar):
-    #     examplar = self.backbone(examplar)
-    #     if cfg.ADJUST.USE:
-    #         examplar=self.neck(examplar)
-    #     return examplar[0],examplar[1],examplar[2]
+    @torch.no_grad()
+    def forward(self, examplar):
+        examplar = self.backbone(examplar)
+        if cfg.ADJUST.USE:
+            examplar=self.neck(examplar)
+        return examplar[0],examplar[1],examplar[2]
 
     # def get_examplar(self, examplar):
     #     examplar = self.backbone(examplar)
@@ -74,15 +74,15 @@ class BaseSiamModel(nn.Module):
     #     pred_cls, pred_loc = self.rpn(examplar, search)
     #     return pred_cls, pred_loc
 
-    @torch.no_grad()
-    def forward(self,examplar,search):
-        examplar = self.backbone(examplar)
-        search = self.backbone(search)
-        if cfg.ADJUST.USE:
-            examplar = self.neck(examplar)
-            search = self.neck(search)
-        pred_cls, pred_loc = self.rpn(examplar, search)
-        return pred_cls,pred_loc
+    # @torch.no_grad()
+    # def forward(self,examplar,search):
+    #     examplar = self.backbone(examplar)
+    #     search = self.backbone(search)
+    #     if cfg.ADJUST.USE:
+    #         examplar = self.neck(examplar)
+    #         search = self.neck(search)
+    #     pred_cls, pred_loc = self.rpn(examplar, search)
+    #     return pred_cls,pred_loc
 
 
     def log_softmax(self, cls):

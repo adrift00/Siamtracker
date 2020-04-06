@@ -5,7 +5,7 @@ cfg = CfgNode(new_allowed=True)
 cfg.META_ARC = 'siamrpn_alex_dwxcorr'
 
 cfg.DATASET = CfgNode()
-cfg.DATASET.NAMES = ['VID', 'COCO', 'DET','YOUTUBEBB']
+cfg.DATASET.NAMES = ['VID']
 cfg.DATASET.COCO = CfgNode()
 cfg.DATASET.COCO.DATA_DIR = '../pysot/training_dataset/coco/crop511'
 cfg.DATASET.COCO.ANNO_FILE = '../pysot/training_dataset/coco/train2017.json'

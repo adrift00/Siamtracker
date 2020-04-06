@@ -212,7 +212,9 @@ class TrainDataset(Dataset):
             'search_img': search_img,
             'gt_cls': gt_cls,
             'gt_delta': gt_delta,
-            'delta_weight': delta_weight
+            'delta_weight': delta_weight,
+            'bbox': np.array(search_bbox)
+
         }
 
     def __len__(self):

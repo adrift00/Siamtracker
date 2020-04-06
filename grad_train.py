@@ -43,9 +43,9 @@ def build_optimizer(model, current_epoch=0):
     trainable_param += [
         {"params": model.grad_layer.parameters(), "lr": cfg.GRAD.LR},  # TODO: may be can be optimized
     ]
-    # trainable_param += [
-    #     {'params': model.rpn.parameters(), 'lr': cfg.GRAD.LR * 0.1}
-    # ]
+    trainable_param += [
+        {'params': model.rpn.parameters(), 'lr': cfg.GRAD.LR * 0.1}
+    ]
     optimizer = Adam(trainable_param, weight_decay=cfg.GRAD.WEIGHT_DECAY)
     return optimizer
 

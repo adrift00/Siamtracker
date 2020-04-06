@@ -181,21 +181,21 @@ def main():
     # base_model = base_model.cuda().eval()
 
     # test the pruning model
-    # base_model = get_model('GDPSiamModel')
+    # base_model = get_model('PruningSiamModel')
     # base_model = load_pretrain(base_model, args.snapshot)
     # base_model = pruning_model(base_model).cuda().eval()
     # torch.save(base_model.state_dict(), './snapshot/mobilenetv2_gdp/model_pruning.pth')
 
     # test the model after real prunging
-    base_model = get_model('GDPSiamModel')
-    base_model = load_pretrain(base_model, cfg.PRUNING.FINETUNE.PRETRAIN_PATH) # load the mask
-    base_model = prune_model(base_model) # refine the model
-    base_model=load_pretrain(base_model,args.snapshot).cuda().eval() # load the finetune weight
+    # base_model = get_model('PruningSiamModel')
+    # base_model = load_pretrain(base_model, cfg.PRUNING.FINETUNE.PRETRAIN_PATH) # load the mask
+    # base_model = prune_model(base_model) # refine the model
+    # base_model=load_pretrain(base_model,args.snapshot).cuda().eval() # load the finetune weight
     # grad
-    # base_model = get_model(model_name)
-    # base_model = load_pretrain(base_model, args.snapshot)
-    # base_model = base_model.cuda().eval()
-    # base_model.freeze_model()
+    base_model = get_model(model_name)
+    base_model = load_pretrain(base_model, args.snapshot)
+    base_model = base_model.cuda().eval()
+    base_model.freeze_model()
 
     tracker = get_tracker(args.tracker, base_model)
     data_dir = os.path.join(cfg.TRACK.DATA_DIR, args.dataset)

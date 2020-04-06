@@ -8,7 +8,7 @@ models = {'BaseSiamModel': BaseSiamModel,
           'MetaSiamModel': MetaSiamModel,
           'GraphSiamModel': GraphSiamModel,
           'GradSiamModel': GradSiamModel,
-          'GDPSiamModel': PruningSiamModel
+          'PruningSiamModel': PruningSiamModel
           }
 
 

@@ -13,23 +13,23 @@ class PruningSiamModel(BaseSiamModel):
         self.mask_scores = {}
         self.create_mask()
 
-    def forward(self, examplar, search, gt_cls, gt_loc, gt_loc_weight):
-        # normal forward
-        examplar = self.backbone(examplar)
-        search = self.backbone(search)
-        if cfg.ADJUST.USE:
-            examplar = self.neck(examplar)
-            search = self.neck(search)
-        pred_cls, pred_loc = self.rpn(examplar, search)
-        pred_cls = self.log_softmax(pred_cls)
-        cls_loss = select_cross_entropy_loss(pred_cls, gt_cls)
-        loc_loss = weight_l1_loss(pred_loc, gt_loc, gt_loc_weight)
-        total_loss = cfg.TRAIN.CLS_WEIGHT * cls_loss + cfg.TRAIN.LOC_WEIGHT * loc_loss
-        return {
-            'cls_loss': cls_loss,
-            'loc_loss': loc_loss,
-            'total_loss': total_loss
-        }
+    # def forward(self, examplar, search, gt_cls, gt_loc, gt_loc_weight):
+    #     # normal forward
+    #     examplar = self.backbone(examplar)
+    #     search = self.backbone(search)
+    #     if cfg.ADJUST.USE:
+    #         examplar = self.neck(examplar)
+    #         search = self.neck(search)
+    #     pred_cls, pred_loc = self.rpn(examplar, search)
+    #     pred_cls = self.log_softmax(pred_cls)
+    #     cls_loss = select_cross_entropy_loss(pred_cls, gt_cls)
+    #     loc_loss = weight_l1_loss(pred_loc, gt_loc, gt_loc_weight)
+    #     total_loss = cfg.TRAIN.CLS_WEIGHT * cls_loss + cfg.TRAIN.LOC_WEIGHT * loc_loss
+    #     return {
+    #         'cls_loss': cls_loss,
+    #         'loc_loss': loc_loss,
+    #         'total_loss': total_loss
+    #     }
 
     def create_mask(self):
         repeat_times = [1, 2, 3, 4, 3, 3, 1]
