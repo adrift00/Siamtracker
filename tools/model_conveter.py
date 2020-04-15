@@ -40,16 +40,16 @@ if __name__ == '__main__':
     #                   input_names=['examplar','search'],
     #                   output_names=['cls','loc'])
 
-    cfg.merge_from_file('configs/mobilenetv2_finetune.yaml')
+    cfg.merge_from_file('configs/mobilenetv2_pruning.yaml')
     pretrained_path = './snapshot/mobilenetv2_sfp_0_75/checkpoint_e12.pth'
     model = get_model('PruningSiamModel')
     model = load_pretrain(model, pretrained_path)  # load the mask
     model = prune_model(model)  # refine the model
     model = load_pretrain(model,
-                          './snapshot/mobilenetv2_sfp_0_75_finetune/checkpoint_e20.pth').cuda().eval()  # load the finetune weight
+                          './snapshot/mobilenetv2_sfp_0_75_finetune/checkpoint_e20.pth').cuda().eval()
     examplar = torch.randn(1, 3, 127, 127, device='cuda')
     search = torch.randn(1, 3, 255, 255, device='cuda')
-    model.eval()
+    # model.eval()
     # e0, e1, e2 = model.get_examplar(examplar)
     # torch.onnx.export(model,
     #                   (e0, e1, e2, search),
@@ -59,4 +59,24 @@ if __name__ == '__main__':
 
     #                   output_names=['cls', 'loc'])
     # examplar convert
-    torch.onnx.export(model,examplar,'pretrained_models/siamrpn_mobi_pruning_examplar.onnx',verbose=True,output_names=['e0','e1','e2'])
+    # torch.onnx.export(model,
+    #                   examplar,
+    #                   'pretrained_models/siamrpn_mobi_pruning_examplar_test.onnx',
+    #                   verbose=True,
+    #                   input_names=['examplar'],
+    #                   output_names=['e0', 'e1', 'e2'])
+
+    # torch.onnx.export(model,(examplar,search),'pretrained_models/siamrpn_mobi_pruning.onnx',
+    #                   verbose=True,
+    #                   input_names=['examplar','search'],
+    #                   output_names=['cls','loc'])
+
+
+
+    # test
+    torch.onnx.export(model,
+                      examplar,
+                      'pretrained_models/siamrpn_mobi_pruning_examplar_test.onnx',
+                      verbose=True,
+                      input_names=['examplar'],
+                      output_names=['e1'])

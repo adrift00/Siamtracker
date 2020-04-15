@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
+import numpy as np
 
 from configs.config import cfg
 from models.backbone import get_backbone
@@ -19,12 +20,21 @@ class BaseSiamModel(nn.Module):
         self.rpn = get_rpn_head(cfg.RPN.TYPE, **cfg.RPN.KWARGS)
 
     # def forward(self, examplar, search, gt_cls, gt_loc, gt_loc_weight):
+    #     print(examplar[0,0,0,0])
+    #     print(examplar[0,1,0,0])
+    #     print(examplar[0,2,0,0])
+    #     print(search[0,0,0,0])
+    #     print(search[0,1,0,0])
+    #     print(search[0,2,0,0])
     #     examplar = self.backbone(examplar)
     #     search = self.backbone(search)
     #     if cfg.ADJUST.USE:
     #         examplar = self.neck(examplar)
     #         search = self.neck(search)
     #     pred_cls, pred_loc = self.rpn(examplar, search)
+    #     print(pred_cls.detach().cpu().numpy().max(axis=(2,3)))
+    #     print(pred_cls.detach().cpu().numpy().min(axis=(2,3)))
+    #
     #     pred_cls = self.log_softmax(pred_cls)
     #     cls_loss = select_cross_entropy_loss(pred_cls, gt_cls)
     #     loc_loss = weight_l1_loss(pred_loc, gt_loc, gt_loc_weight)
@@ -52,12 +62,19 @@ class BaseSiamModel(nn.Module):
 
 
     # for model conveter
-    @torch.no_grad()
-    def forward(self, examplar):
-        examplar = self.backbone(examplar)
-        if cfg.ADJUST.USE:
-            examplar=self.neck(examplar)
-        return examplar[0],examplar[1],examplar[2]
+    # @torch.no_grad()
+    # def forward(self, examplar):
+    #     # np.set_printoptions(threshold=np.inf)
+    #     # print(examplar.detach().cpu().numpy()[0,1,:,:],)
+    #     # examplar = self.backbone(examplar)
+    #     # if cfg.ADJUST.USE:
+    #     #     examplar=self.neck(examplar)
+    #     # print(examplar[0].detach().cpu().numpy())
+    #     # return examplar[0],examplar[1],examplar[2]
+    #     examplar=self.backbone(examplar)
+    #     np.set_printoptions(threshold=np.inf)
+    #     # print(examplar[0,0:10,:,:].detach().cpu().numpy())
+    #     return examplar
 
     # def get_examplar(self, examplar):
     #     examplar = self.backbone(examplar)

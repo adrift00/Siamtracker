@@ -31,6 +31,20 @@ class PruningSiamModel(BaseSiamModel):
     #         'total_loss': total_loss
     #     }
 
+    @torch.no_grad()
+    def forward(self, examplar):
+        # np.set_printoptions(threshold=np.inf)
+        # print(examplar.detach().cpu().numpy()[0,1,:,:],)
+        # examplar = self.backbone(examplar)
+        # if cfg.ADJUST.USE:
+        #     examplar=self.neck(examplar)
+        # print(examplar[0].detach().cpu().numpy())
+        # return examplar[0],examplar[1],examplar[2]
+        examplar=self.backbone(examplar)
+        np.set_printoptions(threshold=np.inf)
+        print(examplar[0,0:10,:,:].detach().cpu().numpy())
+        return examplar
+
     def create_mask(self):
         repeat_times = [1, 2, 3, 4, 3, 3, 1]
         backbone_params = dict(self.backbone.named_parameters())
@@ -62,43 +76,45 @@ class PruningSiamModel(BaseSiamModel):
             self.mask['neck.' + k] = torch.ones(v.size(0)).cuda()
 
         # for rpn
-        for k, v in self.rpn.named_parameters():
-            if 'head.0' in k or 'head.1' in k:  # now only prune the first layer of the head
-                if len(v.size()) == 1:  # skip the batchnorm
-                    continue
-                self.mask['rpn.' + k] = torch.ones(v.size(0)).cuda()
+        # for k, v in self.rpn.named_parameters():
+        #     if 'head.0' in k or 'head.1' in k:  # now only prune the first layer of the head
+        #         if len(v.size()) == 1:  # skip the batchnorm
+        #             continue
+        #         self.mask['rpn.' + k] = torch.ones(v.size(0)).cuda()
 
     def update_mask(self):
-        # model_params = dict(self.named_parameters())
-        # pruned_params = {k: model_params[k] for k in self.mask.keys()}
-        # for i, (k, v) in enumerate(self.mask.items()):
-        #     self.mask_scores[k] = torch.sqrt(torch.pow(pruned_params[k], 2).sum((1, 2, 3))).detach().cpu().numpy()
-        #
-        # for key, mask_score in self.mask_scores.items():
-        #     keep_num = int(len(mask_score) * cfg.PRUNING.KEEP_RATE)
-        #     sorted_idx = np.argsort(-mask_score)  # reserve order, so times -1
-        #     self.mask[key][sorted_idx[:keep_num]] = 1
-        #     self.mask[key][sorted_idx[keep_num:]] = 0
-        #
-        # for k, mask in self.mask.items():
-        #     model_params[k].data.mul_(mask[:, None, None, None])
-        model_params=dict(self.named_parameters())
-        pruned_params={k:model_params[k] for k in self.mask.keys()}
-        for k in self.mask.keys():
-            param=pruned_params[k]
-            self.mask_scores[k]=np.zeros(param.size(0))
-            for i in range(param.size(0)):
-                filter=param[i]
-                distance=((param-filter)**2).sum((1,2,3)).sqrt().sum()
-                # distance=((param-filter)**2).sum()
-                self.mask_scores[k][i]=distance
+        # sfp
+        model_params = dict(self.named_parameters())
+        pruned_params = {k: model_params[k] for k in self.mask.keys()}
+        for i, (k, v) in enumerate(self.mask.items()):
+            self.mask_scores[k] = torch.sqrt(torch.pow(pruned_params[k], 2).sum((1, 2, 3))).detach().cpu().numpy()
+
         for key, mask_score in self.mask_scores.items():
             keep_num = int(len(mask_score) * cfg.PRUNING.KEEP_RATE)
             sorted_idx = np.argsort(-mask_score)  # reserve order, so times -1
             self.mask[key][sorted_idx[:keep_num]] = 1
             self.mask[key][sorted_idx[keep_num:]] = 0
+
         for k, mask in self.mask.items():
             model_params[k].data.mul_(mask[:, None, None, None])
+        # gm pruning
+        # model_params=dict(self.named_parameters())
+        # pruned_params={k:model_params[k] for k in self.mask.keys()}
+        # for k in self.mask.keys():
+        #     param=pruned_params[k]
+        #     self.mask_scores[k]=np.zeros(param.size(0))
+        #     for i in range(param.size(0)):
+        #         filter=param[i]
+        #         distance=((param-filter)**2).sum((1,2,3)).sqrt().sum()
+        #         # distance=((param-filter)**2).sum()
+        #         self.mask_scores[k][i]=distance
+        # for key, mask_score in self.mask_scores.items():
+        #     keep_num = int(len(mask_score) * cfg.PRUNING.KEEP_RATE)
+        #     sorted_idx = np.argsort(-mask_score)  # reserve order, so times -1
+        #     self.mask[key][sorted_idx[:keep_num]] = 1
+        #     self.mask[key][sorted_idx[keep_num:]] = 0
+        # for k, mask in self.mask.items():
+        #     model_params[k].data.mul_(mask[:, None, None, None])
 
     def apply_mask(self):
         model_params = dict(self.named_parameters())

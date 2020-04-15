@@ -111,16 +111,22 @@ class MobileNetV2(nn.Module):
             self.add_module('layer{}'.format(idx), nn.Sequential(*bottleneck))
 
     def forward(self, x):
+        # outputs = []
+        # for i in range(8):
+        #     name = 'layer{}'.format(i)
+        #     x = getattr(self, name)(x)
+        #     outputs.append(x)
+        # outs = [outputs[i] for i in self.used_layers]
+        # if len(outs) == 1:
+        #     return outs[0]
+        # else:
+        #     return outs
         outputs = []
         for i in range(8):
             name = 'layer{}'.format(i)
             x = getattr(self, name)(x)
             outputs.append(x)
-        outs = [outputs[i] for i in self.used_layers]
-        if len(outs) == 1:
-            return outs[0]
-        else:
-            return outs
+        return outputs[0]
         
 
 def mobilenet_v2(**kwargs):

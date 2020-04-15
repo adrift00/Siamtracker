@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import os
 from utils.bbox import center2corner
 
 
@@ -21,11 +22,14 @@ def show_double_bbox(img, pred_bbox, pred_score, gt_bbox, idx, lost_number,):
     cv2.putText(img, str(idx), (40, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
     cv2.putText(img, str(lost_number), (40, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
     cv2.putText(img, '{:.2f}'.format(pred_score), (40, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-    cv2.namedWindow('double bbox', cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
-    # cv2.resizeWindow('double bbox',1000,600)
-    cv2.resizeWindow('double bbox', 600, 400)
-    cv2.imshow('double bbox', img)
-    cv2.waitKey(200)
+    # cv2.namedWindow('double bbox', cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)
+    # cv2.resizeWindow('double bbox', 600, 400)
+    # cv2.imshow('double bbox', img)
+    # cv2.waitKey(200)
+    visual_dir='visual_imgs'
+    if not os.path.isdir(visual_dir):
+        os.makedirs(visual_dir)
+    cv2.imwrite(os.path.join(visual_dir,'{}.png'.format(idx)),img)
 
 
 def show_single_bbox(img, bbox):
