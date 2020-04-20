@@ -1,3 +1,4 @@
+import gc
 import json
 import math
 import os
@@ -11,6 +12,8 @@ from torch import optim
 from torch.nn.utils import clip_grad_norm_
 from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
+# from memory_profiler import profile
+# import psutil
 from configs.config import cfg
 from dataset.dataset import TrainDataset
 from models.pruning_siam_model import PruningSiamModel
@@ -93,7 +96,7 @@ def build_optimizer_lr(model, current_epoch=0):
         'lr': cfg.PRUNING.BASE_LR
     }]
     optimizer = optim.SGD(trainable_param, momentum=cfg.PRUNING.MOMENTUM, weight_decay=cfg.PRUNING.WEIGHT_DECAY)
-    lr_scheduler = build_lr_scheduler(optimizer, epochs=cfg.PRUNING.EPOCHS)
+    lr_scheduler = build_lr_scheduler(optimizer, epochs=cfg.PRUNING.EPOCHS,config=cfg.PRUNING.LR)
     lr_scheduler.step(cfg.PRUNING.START_EPOCH)
     return optimizer, lr_scheduler
 
@@ -109,7 +112,6 @@ def build_data_loader():
                                   num_workers=cfg.TRAIN.NUM_WORKERS,
                                   pin_memory=True)
     return train_dataloader
-
 
 def train(train_dataloader, model, optimizer, lr_scheduler):
     def is_valid_number(x):
@@ -169,6 +171,9 @@ def train(train_dataloader, model, optimizer, lr_scheduler):
                 print_speed(iter + 1 + start_epoch * num_per_epoch,
                             average_meter.batch_time.avg,
                             cfg.PRUNING.EPOCHS * num_per_epoch)
+                # mem = psutil.virtual_memory()
+                # mem_used=mem.used/1024/1024
+                # logger.info('memory used: {}M'.format(mem_used))
             iter += 1
         model.update_mask()
         for k, v in model.mask.items():

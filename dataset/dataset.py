@@ -3,7 +3,9 @@ import json
 import logging
 import cv2
 import numpy as np
+import psutil
 from torch.utils.data import Dataset
+from memory_profiler import profile
 from configs.config import cfg
 from utils.bbox import center2corner, Center
 from utils.anchor import AnchorTarget
@@ -139,7 +141,6 @@ class TrainDataset(Dataset):
             cfg.DATASET.SEARCH.COLOR
         )
         # self.shuffle()
-
     def shuffle(self):
         pick = []
         num = 0
@@ -172,7 +173,10 @@ class TrainDataset(Dataset):
         bbox = center2corner(Center(cx, cy, w, h))
         return bbox
 
+    # @profile(precision=4)
     def __getitem__(self, idx):
+        # mem = psutil.virtual_memory()
+        # mem_used=mem.used/1024/1024
         idx = self.pick[idx]
         sub_dataset, idx = self._find_dataset(idx)
         gray = cfg.DATASET.GRAY and cfg.DATASET.GRAY > np.random.random()
@@ -182,11 +186,25 @@ class TrainDataset(Dataset):
             search = np.random.choice(self.all_dataset).get_random_target()
         else:
             examplar, search = sub_dataset.get_postive_pair(idx)
+        #----------------------------------------------------
+        # cur_mem=psutil.virtual_memory()
+        # cur_mem_used=cur_mem.used/1024/1024
+        # logger.info('mem add {}'.format(cur_mem_used-mem_used))
+        # mem = psutil.virtual_memory()
+        # mem_used=mem.used/1024/1024
+        #----------------------------------------------------
         examplar_img = cv2.imread(examplar[0])
         search_img = cv2.imread(search[0])
 
         examplar_bbox = self.get_bbox(examplar_img, examplar[1])
         search_bbox = self.get_bbox(search_img, search[1])  # bbox: x1,y1,x2,y2
+        #----------------------------------------------------
+        # cur_mem=psutil.virtual_memory()
+        # cur_mem_used=cur_mem.used/1024/1024
+        # logger.info('mem add {}'.format(cur_mem_used-mem_used))
+        # mem = psutil.virtual_memory()
+        # mem_used=mem.used/1024/1024
+        #----------------------------------------------------
 
         examplar_img, examplar_bbox = self.template_aug(examplar_img,
                                                         examplar_bbox,
@@ -196,6 +214,13 @@ class TrainDataset(Dataset):
                                                   search_bbox,
                                                   cfg.TRAIN.SEARCH_SIZE,
                                                   gray=gray)
+        #----------------------------------------------------
+        # cur_mem=psutil.virtual_memory()
+        # cur_mem_used=cur_mem.used/1024/1024
+        # logger.info('mem add {}'.format(cur_mem_used-mem_used))
+        # mem = psutil.virtual_memory()
+        # mem_used=mem.used/1024/1024
+        #----------------------------------------------------
         # debug
         # print('template', examplar[0])
         # print('search', search[0])
@@ -207,6 +232,13 @@ class TrainDataset(Dataset):
         gt_cls, gt_delta, delta_weight = self.anchor_target(search_bbox, neg)
         examplar_img = examplar_img.transpose((2, 0, 1)).astype(np.float32)  # NOTE: set as c,h,w and type=float32
         search_img = search_img.transpose((2, 0, 1)).astype(np.float32)
+        #----------------------------------------------------
+        # cur_mem=psutil.virtual_memory()
+        # cur_mem_used=cur_mem.used/1024/1024
+        # logger.info('mem add {}'.format(cur_mem_used-mem_used))
+        # mem = psutil.virtual_memory()
+        # mem_used=mem.used/1024/1024
+        #----------------------------------------------------
         return {
             'examplar_img': examplar_img,
             'search_img': search_img,
@@ -214,7 +246,6 @@ class TrainDataset(Dataset):
             'gt_delta': gt_delta,
             'delta_weight': delta_weight,
             'bbox': np.array(search_bbox)
-
         }
 
     def __len__(self):

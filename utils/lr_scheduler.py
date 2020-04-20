@@ -139,11 +139,11 @@ def _build_warm_up_scheduler(optimizer, epochs=50, last_epoch=-1):
     return WarmUPScheduler(optimizer, sc1, sc2, epochs, last_epoch)
 
 
-def build_lr_scheduler(optimizer, epochs=50, last_epoch=-1):
+def build_lr_scheduler(optimizer, epochs=50, last_epoch=-1,config=cfg.TRAIN.LR):
     if cfg.TRAIN.LR_WARMUP.WARMUP:
         return _build_warm_up_scheduler(optimizer, epochs, last_epoch)
     else:
-        return _build_lr_scheduler(optimizer, cfg.TRAIN.LR,
+        return _build_lr_scheduler(optimizer, config,
                                    epochs, last_epoch)
 
 

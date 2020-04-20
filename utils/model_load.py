@@ -71,6 +71,7 @@ def load_pretrain(model, pretrained_path):
         model.init_weight = pretrained_dict['init_weight']
         model.alpha = pretrained_dict['alpha']
         model.bn_weight = pretrained_dict['bn_weight']
+    # for prune model
     if 'mask' in pretrained_dict.keys() \
             and 'mask_scores' in pretrained_dict.keys():
         model.mask=pretrained_dict['mask']
