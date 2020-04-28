@@ -164,8 +164,9 @@ def main():
     cfg.merge_from_file(args.cfg)
     init_log('global', logging.INFO)
 
-    base_model=get_model(cfg.MODEL_ARC)
+    base_model = get_model(cfg.MODEL_ARC)
     base_model = load_pretrain(base_model, args.snapshot).cuda().eval()
+    # base_model = prune_model(base_model).cuda().eval()  # refine the model
 
     # if want to test real pruning
     # base_model = get_model(cfg.MODEL_ARC)

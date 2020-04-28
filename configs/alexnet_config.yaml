@@ -36,7 +36,7 @@ TRACK:
 
 TRAIN:
     EPOCHS: 50
-    START_EPOCH: 34
+    START_EPOCH: 42
     BATCH_SIZE: 256
     BASE_SIZE: 0
     OUTPUT_SIZE: 17
@@ -44,7 +44,7 @@ TRAIN:
     CLS_WEIGHT: 1.
     LOC_WEIGHT: 1.2
     RESUME: True
-    RESUME_PATH: './snapshot/alexnet_new/checkpoint_e34.pth'
+    RESUME_PATH: './snapshot/alexnet_new/checkpoint_e42.pth'
     SNAPSHOT_DIR: './snapshot/alexnet_new'
     LOG_DIR: './logs/alexnet_new'
 

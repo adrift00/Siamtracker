@@ -96,8 +96,6 @@ class PruningSiamModel(BaseSiamModel):
             self.mask[key][sorted_idx[:keep_num]] = 1
             self.mask[key][sorted_idx[keep_num:]] = 0
 
-        for k, mask in self.mask.items():
-            model_params[k].data.mul_(mask[:, None, None, None])
         # gm pruning
         # model_params=dict(self.named_parameters())
         # pruned_params={k:model_params[k] for k in self.mask.keys()}
@@ -114,13 +112,46 @@ class PruningSiamModel(BaseSiamModel):
         #     sorted_idx = np.argsort(-mask_score)  # reserve order, so times -1
         #     self.mask[key][sorted_idx[:keep_num]] = 1
         #     self.mask[key][sorted_idx[keep_num:]] = 0
-        # for k, mask in self.mask.items():
-        #     model_params[k].data.mul_(mask[:, None, None, None])
 
     def apply_mask(self):
         model_params = dict(self.named_parameters())
-        for k, mask in self.mask.items():
-            model_params[k].data.mul_(mask[:, None, None, None])
+        for key, mask in self.mask.items():
+            model_params[key].data.mul_(mask[:, None, None, None])
+            # bn mask
+            key_prefix = key.split('.')[:-1]
+            key_prefix[-1] = str(int(key_prefix[-1]) + 1)
+            key_prefix = '.'.join(key_prefix)
+            self._apply_bn_mask(model_params, key_prefix, mask)
+            if key.startswith('backbone'):
+                # for deepwise
+                key_prefix = key.split('.')[:-1]
+                key_prefix[-1] = str(int(key_prefix[-1]) + 3)
+                key_prefix = '.'.join(key_prefix)
+                self._apply_deepwise_mask(model_params, key_prefix, mask)
+                # for deepwise bn
+                key_prefix = key.split('.')[:-1]
+                key_prefix[-1] = str(int(key_prefix[-1]) + 4)
+                key_prefix = '.'.join(key_prefix)
+                self._apply_bn_mask(model_params, key_prefix, mask)
+
+    def _apply_bn_mask(self, model_params, key_prefix, mask):
+        new_k = key_prefix + '.weight'
+        if new_k in model_params.keys():
+            model_params[new_k].data.mul_(mask)
+        new_k = key_prefix + '.bias'
+        if new_k in model_params.keys():
+            model_params[new_k].data.mul_(mask)
+        new_k = key_prefix + '.running_mean'
+        if new_k in model_params.keys():
+            model_params[new_k].data.mul_(mask)
+        new_k = key_prefix + '.running_var'
+        if new_k in model_params.keys():
+            model_params[new_k].data.mul_(mask)
+
+    def _apply_deepwise_mask(self, model_params, key_prefix, mask):
+        new_k = key_prefix + '.weight'
+        if new_k in model_params.keys():
+            model_params[new_k].data.mul_(mask[:, None, None, None])
 
 
 if __name__ == '__main__':

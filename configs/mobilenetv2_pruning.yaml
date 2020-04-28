@@ -99,12 +99,12 @@ PRUNING:
     MOMENTUM: 0.9
     WEIGHT_DECAY: 0.0005
     EPOCHS: 20
-    START_EPOCH: 4
-    RESUME: True
-    RESUME_PATH: './snapshot/mobilenetv2_sfp_0_75/checkpoint_e4.pth'
+    START_EPOCH: 0
+    RESUME: False
+    RESUME_PATH: ''
 
-    LOG_DIR: './logs/mobilenetv2_sfp_0_75'
-    SNAPSHOT_DIR: './snapshot/mobilenetv2_sfp_0_75'
+    LOG_DIR: './logs/mobilenetv2_sfp_0_75_new'
+    SNAPSHOT_DIR: './snapshot/mobilenetv2_sfp_0_75_new'
     LOG_GRAD: False
     GRAD_CLIP: False
     PRETRAIN_PATH: './pretrained_models/siamrpn_mobi.pth'
@@ -127,7 +127,7 @@ PRUNING:
         SNAPSHOT_DIR: './snapshot/mobilenetv2_sfp_0_75_finetune'
         LOG_GRAD: False
         GRAD_CLIP: False
-        PRETRAIN_PATH: './snapshot/mobilenetv2_sfp_0_75/checkpoint_e12.pth'
+        PRETRAIN_PATH: './snapshot/mobilenetv2_sfp_0_75/checkpoint_e1.pth'
         LR:
             TYPE: 'step'
             KWARGS:
