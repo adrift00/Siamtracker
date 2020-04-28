@@ -1,4 +1,4 @@
-
+MODEL_ARC: 'MetaSiamModel'
 META:
     DATASET:
         NAMES:

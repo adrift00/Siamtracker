@@ -127,6 +127,15 @@ def train(train_dataloader, model, optimizer, lr_scheduler):
         os.makedirs(cfg.PRUNING.SNAPSHOT_DIR)
     model.apply_mask() # apply the mask when resume, if start in 0 epoch, the mask are all 1
     model.update_mask()
+    state = {
+        'model': model.state_dict(),
+        'optimizer': optimizer.state_dict(),
+        'epoch': 0,
+        'mask': model.mask,
+        'mask_scores': model.mask_scores
+    }
+    logger.info('save snapshot to {}/checkpoint_e{}.pth'.format(cfg.PRUNING.SNAPSHOT_DIR, 0))
+    torch.save(state, '{}/checkpoint_e{}.pth'.format(cfg.PRUNING.SNAPSHOT_DIR, 0))
     for epoch in range(cfg.PRUNING.START_EPOCH, cfg.PRUNING.EPOCHS):
         train_dataloader.dataset.shuffle()
         lr_scheduler.step(epoch)

@@ -2,7 +2,7 @@ from yacs.config import CfgNode
 
 cfg = CfgNode(new_allowed=True)
 
-cfg.META_ARC = 'siamrpn_alex_dwxcorr'
+cfg.MODEL_ARC = 'BaseSiamModel'
 
 cfg.DATASET = CfgNode()
 cfg.DATASET.NAMES = ['VID']

@@ -1,4 +1,4 @@
-META_ARC: "siamrpn_alex_dwxcorr"
+MODEL_ARC: "BaseSiamModel"
 
 BACKBONE:
     TYPE: "alexnet"
@@ -36,16 +36,17 @@ TRACK:
 
 TRAIN:
     EPOCHS: 50
-    START_EPOCH: 0
-    BATCH_SIZE: 32
+    START_EPOCH: 34
+    BATCH_SIZE: 256
     BASE_SIZE: 0
     OUTPUT_SIZE: 17
     BASE_LR: 0.005
     CLS_WEIGHT: 1.
     LOC_WEIGHT: 1.2
-    RESUME: False
-    SNAPSHOT_DIR: './snapshot/alexnet'
-    LOG_DIR: './logs/alexnet'
+    RESUME: True
+    RESUME_PATH: './snapshot/alexnet_new/checkpoint_e34.pth'
+    SNAPSHOT_DIR: './snapshot/alexnet_new'
+    LOG_DIR: './logs/alexnet_new'
 
     LR:
         TYPE: 'log'
@@ -65,6 +66,7 @@ DATASET:
     - 'COCO'
     - 'VID'
     - 'DET'
+    - 'YOUTUBEBB'
 
     EXAMPLAR:
         SHIFT: 4

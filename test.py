@@ -163,39 +163,15 @@ def main():
     seed_torch(123456)
     cfg.merge_from_file(args.cfg)
     init_log('global', logging.INFO)
-    # get the base model, may can be refracted.
-    # TODO: use the config in the yaml file,instead of this
-    if args.tracker == 'SiamRPN':
-        model_name = 'BaseSiamModel'
-    elif args.tracker == 'MetaSiamRPN':
-        model_name = 'MetaSiamModel'
-    elif args.tracker == 'GraphSiamRPN':
-        model_name = 'GraphSiamModel'
-    elif args.tracker == 'GradSiamRPN':
-        model_name = 'GradSiamModel'
-    else:
-        raise Exception('tracker is valid')
-    # normal use
-    # base_model = get_model(model_name)
-    # base_model = load_pretrain(base_model, args.snapshot).cuda().eval()
-    # base_model = base_model.cuda().eval()
 
-    # test the pruning model
-    base_model = get_model('PruningSiamModel')
-    base_model = load_pretrain(base_model, args.snapshot)
-    base_model = prune_model(base_model).cuda().eval()
-    # torch.save(base_model.state_dict(), './snapshot/mobilenetv2_gdp/model_pruning.pth')
+    base_model=get_model(cfg.MODEL_ARC)
+    base_model = load_pretrain(base_model, args.snapshot).cuda().eval()
 
-    # test the model after real prunging
-    # base_model = get_model('PruningSiamModel')
+    # if want to test real pruning
+    # base_model = get_model(cfg.MODEL_ARC)
     # base_model = load_pretrain(base_model, cfg.PRUNING.FINETUNE.PRETRAIN_PATH) # load the mask
     # base_model = prune_model(base_model) # refine the model
     # base_model=load_pretrain(base_model,args.snapshot).cuda().eval() # load the finetune weight
-    # grad
-    # base_model = get_model(model_name)
-    # base_model = load_pretrain(base_model, args.snapshot)
-    # base_model = base_model.cuda().eval()
-    # base_model.freeze_model()
 
     tracker = get_tracker(args.tracker, base_model)
     data_dir = os.path.join(cfg.TRACK.DATA_DIR, args.dataset)

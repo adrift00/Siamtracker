@@ -60,7 +60,8 @@ class PruningSiamModel(BaseSiamModel):
         idx = 3
         for i in range(7):  # 6 layers
             for j in range(repeat_times[i]):  # for n bottlenecks
-                for k in range(6): # the 6 params will be mask, because the last layer of every bottleneck will be added.
+                for k in range(6):
+                    # the 6 params will be mask, because the last layer of every bottleneck will be added, so don't pruning them..
                     if len(backbone_param_values[idx + k].size()) == 1:  # skip the batchnorm
                         continue
                     if len(backbone_param_values[idx + k].size()) == 4 \
@@ -76,11 +77,11 @@ class PruningSiamModel(BaseSiamModel):
             self.mask['neck.' + k] = torch.ones(v.size(0)).cuda()
 
         # for rpn
-        # for k, v in self.rpn.named_parameters():
-        #     if 'head.0' in k or 'head.1' in k:  # now only prune the first layer of the head
-        #         if len(v.size()) == 1:  # skip the batchnorm
-        #             continue
-        #         self.mask['rpn.' + k] = torch.ones(v.size(0)).cuda()
+        for k, v in self.rpn.named_parameters():
+            if 'head.0' in k or 'head.1' in k:  # now only prune the first layer of the head
+                if len(v.size()) == 1:  # skip the batchnorm
+                    continue
+                self.mask['rpn.' + k] = torch.ones(v.size(0)).cuda()
 
     def update_mask(self):
         # sfp
@@ -120,7 +121,6 @@ class PruningSiamModel(BaseSiamModel):
         model_params = dict(self.named_parameters())
         for k, mask in self.mask.items():
             model_params[k].data.mul_(mask[:, None, None, None])
-
 
 
 if __name__ == '__main__':

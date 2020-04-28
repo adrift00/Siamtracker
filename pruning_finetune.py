@@ -174,6 +174,8 @@ def train(train_dataloader, model, optimizer, lr_scheduler):
             'model': model.state_dict(),
             'optimizer': optimizer.state_dict(),
             'epoch': epoch + 1,
+            'mask': model.mask,
+            'mask_scores': model.mask_scores
         }
         logger.info('save snapshot to {}/checkpoint_e{}.pth'.format(cfg.PRUNING.FINETUNE.SNAPSHOT_DIR, epoch + 1))
         torch.save(state, '{}/checkpoint_e{}.pth'.format(cfg.PRUNING.FINETUNE.SNAPSHOT_DIR, epoch + 1))

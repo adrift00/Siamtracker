@@ -26,7 +26,9 @@ def eval(dataset, trackers):
 
 
 if __name__ == '__main__':
-    trackers = glob(os.path.join(args.result_dir, args.dataset, args.tracker+'*'))
+    # for no fuzzy match now
+    # trackers = glob(os.path.join(args.result_dir, args.dataset, args.tracker+'*'))
+    trackers = glob(os.path.join(args.result_dir, args.dataset, args.tracker))
     data_dir = os.path.join(cfg.TRACK.DATA_DIR, args.dataset)
     dataset = get_dataset(args.dataset, data_dir)
     if args.dataset in ['VOT2016', 'VOT2018']:
