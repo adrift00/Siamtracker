@@ -94,7 +94,7 @@ def build_optimizer_lr(model, current_epoch=0):
         'lr': cfg.PRUNING.FINETUNE.BASE_LR
     }]
     optimizer = optim.SGD(trainable_param, momentum=cfg.PRUNING.FINETUNE.MOMENTUM, weight_decay=cfg.PRUNING.FINETUNE.WEIGHT_DECAY)
-    lr_scheduler = build_lr_scheduler(optimizer, epochs=cfg.PRUNING.FINETUNE.EPOCHS)
+    lr_scheduler = build_lr_scheduler(optimizer, epochs=cfg.PRUNING.FINETUNE.EPOCHS,config=cfg.PRUNING.FINETUNE.LR)
     lr_scheduler.step(cfg.PRUNING.FINETUNE.START_EPOCH)
     return optimizer, lr_scheduler
 
