@@ -137,3 +137,5 @@ if __name__ == '__main__':
     out = net(input)
     for i, o in enumerate(out):
         print(i, o.size())
+
+

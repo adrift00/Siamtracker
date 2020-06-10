@@ -13,7 +13,48 @@ class PruningSiamModel(BaseSiamModel):
         self.mask_scores = {}
         self.create_mask()
 
-    def forward(self, examplar, search, gt_cls, gt_loc, gt_loc_weight):
+    # def forward(self, examplar, search, gt_cls, gt_loc, gt_loc_weight):
+    #     # normal forward
+    #     examplar = self.backbone(examplar)
+    #     search = self.backbone(search)
+    #     if cfg.ADJUST.USE:
+    #         examplar = self.neck(examplar)
+    #         search = self.neck(search)
+    #     pred_cls, pred_loc = self.rpn(examplar, search)
+    #     pred_cls = self.log_softmax(pred_cls)
+    #     cls_loss = select_cross_entropy_loss(pred_cls, gt_cls)
+    #     loc_loss = weight_l1_loss(pred_loc, gt_loc, gt_loc_weight)
+    #     total_loss = cfg.TRAIN.CLS_WEIGHT * cls_loss + cfg.TRAIN.LOC_WEIGHT * loc_loss
+    #     return {
+    #         'cls_loss': cls_loss,
+    #         'loc_loss': loc_loss,
+    #         'total_loss': total_loss
+    #     }
+
+    # def get_examplar(self, examplar):
+    #     examplar = self.backbone(examplar)
+    #     if cfg.ADJUST.USE:
+    #         examplar=self.neck(examplar)
+    #     return examplar[0],examplar[1],examplar[2]
+    # @torch.no_grad()
+    # def forward(self, e0,e1,e2, search):
+    #     examplar=[e0,e1,e2]
+    #     search = self.backbone(search)
+    #     if cfg.ADJUST.USE:
+    #         search = self.neck(search)
+    #     pred_cls, pred_loc = self.rpn(examplar, search)
+    #     return pred_cls, pred_loc
+
+    # @torch.no_grad()
+    # def forward(self, examplar):
+    #     examplar = self.backbone(examplar)
+    #     if cfg.ADJUST.USE:
+    #         examplar=self.neck(examplar)
+    #     return examplar[0],examplar[1],examplar[2]
+
+    # for quant train
+    @torch.no_grad()
+    def forward(self, examplar, search):
         # normal forward
         examplar = self.backbone(examplar)
         search = self.backbone(search)
@@ -21,28 +62,17 @@ class PruningSiamModel(BaseSiamModel):
             examplar = self.neck(examplar)
             search = self.neck(search)
         pred_cls, pred_loc = self.rpn(examplar, search)
-        pred_cls = self.log_softmax(pred_cls)
-        cls_loss = select_cross_entropy_loss(pred_cls, gt_cls)
-        loc_loss = weight_l1_loss(pred_loc, gt_loc, gt_loc_weight)
-        total_loss = cfg.TRAIN.CLS_WEIGHT * cls_loss + cfg.TRAIN.LOC_WEIGHT * loc_loss
-        return {
-            'cls_loss': cls_loss,
-            'loc_loss': loc_loss,
-            'total_loss': total_loss
-        }
+        # cls=pred_cls.detach().cpu().numpy()
+        # print(cls[0])
+        # loc=pred_loc.detach().cpu().numpy()
+        # print(loc[0])
+        return pred_cls, pred_loc
 
     # @torch.no_grad()
     # def forward(self, examplar):
-    #     # np.set_printoptions(threshold=np.inf)
-    #     # print(examplar.detach().cpu().numpy()[0,1,:,:],)
-    #     # examplar = self.backbone(examplar)
-    #     # if cfg.ADJUST.USE:
-    #     #     examplar=self.neck(examplar)
-    #     # print(examplar[0].detach().cpu().numpy())
-    #     # return examplar[0],examplar[1],examplar[2]
-    #     examplar=self.backbone(examplar)
-    #     np.set_printoptions(threshold=np.inf)
-    #     print(examplar[0,0:10,:,:].detach().cpu().numpy())
+    #     examplar = self.backbone(examplar)
+    #     vis_examplar=examplar.detach().cpu().numpy()
+    #     print(vis_examplar[0])
     #     return examplar
 
     def create_mask(self):
@@ -85,33 +115,33 @@ class PruningSiamModel(BaseSiamModel):
 
     def update_mask(self):
         # sfp
-        model_params = dict(self.named_parameters())
-        pruned_params = {k: model_params[k] for k in self.mask.keys()}
-        for i, (k, v) in enumerate(self.mask.items()):
-            self.mask_scores[k] = torch.sqrt(torch.pow(pruned_params[k], 2).sum((1, 2, 3))).detach().cpu().numpy()
-
-        for key, mask_score in self.mask_scores.items():
-            keep_num = int(len(mask_score) * cfg.PRUNING.KEEP_RATE)
-            sorted_idx = np.argsort(-mask_score)  # reserve order, so times -1
-            self.mask[key][sorted_idx[:keep_num]] = 1
-            self.mask[key][sorted_idx[keep_num:]] = 0
-
-        # gm pruning
-        # model_params=dict(self.named_parameters())
-        # pruned_params={k:model_params[k] for k in self.mask.keys()}
-        # for k in self.mask.keys():
-        #     param=pruned_params[k]
-        #     self.mask_scores[k]=np.zeros(param.size(0))
-        #     for i in range(param.size(0)):
-        #         filter=param[i]
-        #         distance=((param-filter)**2).sum((1,2,3)).sqrt().sum()
-        #         # distance=((param-filter)**2).sum()
-        #         self.mask_scores[k][i]=distance
+        # model_params = dict(self.named_parameters())
+        # pruned_params = {k: model_params[k] for k in self.mask.keys()}
+        # for i, (k, v) in enumerate(self.mask.items()):
+        #     self.mask_scores[k] = torch.sqrt(torch.pow(pruned_params[k], 2).sum((1, 2, 3))).detach().cpu().numpy()
+        #
         # for key, mask_score in self.mask_scores.items():
         #     keep_num = int(len(mask_score) * cfg.PRUNING.KEEP_RATE)
         #     sorted_idx = np.argsort(-mask_score)  # reserve order, so times -1
         #     self.mask[key][sorted_idx[:keep_num]] = 1
         #     self.mask[key][sorted_idx[keep_num:]] = 0
+
+        # gm pruning
+        model_params = dict(self.named_parameters())
+        pruned_params = {k: model_params[k] for k in self.mask.keys()}
+        for k in self.mask.keys():
+            param = pruned_params[k]
+            self.mask_scores[k] = np.zeros(param.size(0))
+            for i in range(param.size(0)):
+                filter = param[i]
+                distance = ((param - filter) ** 2).sum((1, 2, 3)).sqrt().sum()
+                # distance=((param-filter)**2).sum()
+                self.mask_scores[k][i] = distance
+        for key, mask_score in self.mask_scores.items():
+            keep_num = int(len(mask_score) * cfg.PRUNING.KEEP_RATE)
+            sorted_idx = np.argsort(-mask_score)  # reserve order, so times -1
+            self.mask[key][sorted_idx[:keep_num]] = 1
+            self.mask[key][sorted_idx[keep_num:]] = 0
 
     def apply_mask(self):
         model_params = dict(self.named_parameters())

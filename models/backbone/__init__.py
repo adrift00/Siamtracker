@@ -1,4 +1,4 @@
-from models.backbone.alex_net import alexnet,AlexNet
+from models.backbone.alexnet import alexnet,AlexNet
 from models.backbone.mobilenet_v2 import mobilenet_v2,MobileNetV2
 
 BACKBONES = {

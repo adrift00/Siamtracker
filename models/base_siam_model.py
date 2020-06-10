@@ -93,6 +93,27 @@ class BaseSiamModel(nn.Module):
     #     pred_cls, pred_loc = self.rpn(examplar, search)
     #     return pred_cls,pred_loc
 
+    # def get_examplar(self, examplar):
+    #     examplar = self.backbone(examplar)
+    #     if cfg.ADJUST.USE:
+    #         examplar=self.neck(examplar)
+    #     return examplar
+    #
+    # @torch.no_grad()
+    # def forward(self, examplar, search):
+    #     search = self.backbone(search)
+    #     if cfg.ADJUST.USE:
+    #         search = self.neck(search)
+    #     pred_cls, pred_loc = self.rpn(examplar, search)
+    #     return pred_cls, pred_loc
+
+    # @torch.no_grad()
+    # def forward(self, examplar):
+    #     examplar = self.backbone(examplar)
+    #     if cfg.ADJUST.USE:
+    #         examplar=self.neck(examplar)
+    #     return examplar
+
 
     def log_softmax(self, cls):
         b, a2, h, w = cls.size()

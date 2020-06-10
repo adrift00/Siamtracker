@@ -29,7 +29,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--cfg', default='', type=str, help='which config file to use')
 args = parser.parse_args()
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 
 def seed_torch(seed=0):
