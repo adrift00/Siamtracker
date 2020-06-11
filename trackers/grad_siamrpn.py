@@ -64,19 +64,7 @@ class GradSiamRPN(BaseTracker):
             return Corner(*bbox)
 
         bbox = get_bbox(search, bbox)
-
-        # vis_bbox = list(map(lambda x: int(x), bbox))
-        # cv2.rectangle(search, (vis_bbox[0], vis_bbox[1]), (vis_bbox[2], vis_bbox[3]), (0, 0, 255), 2)
-        # cv2.imwrite('search.png',search)
-
         search, bbox= self.search_aug(search, bbox, cfg.TRACK.INSTANCE_SIZE)
-
-        # debug
-        # vis_bbox = list(map(lambda x: int(x), bbox))
-        # cv2.rectangle(search, (vis_bbox[0], vis_bbox[1]), (vis_bbox[2], vis_bbox[3]), (0, 0, 255), 2)
-        # cv2.imwrite('search.png',search)
-
-
         search = torch.from_numpy(search[np.newaxis, :].astype(np.float32)).permute(0, 3, 1, 2).cuda()
         gt_cls, gt_loc, gt_loc_weight = self.anchor_target(bbox)
         gt_cls, gt_loc, gt_loc_weight = [torch.from_numpy(x[np.newaxis, :]).cuda() for x in
@@ -119,7 +107,6 @@ class GradSiamRPN(BaseTracker):
                  self.window * cfg.TRACK.WINDOW_INFLUENCE
         best_idx = np.argmax(pscore)
         best_bbox = pred_bbox[best_idx, :]
-        # show_single_bbox(search,best_bbox.tolist())
         best_bbox[0] -= cfg.TRACK.INSTANCE_SIZE // 2
         best_bbox[1] -= cfg.TRACK.INSTANCE_SIZE // 2
         best_bbox = best_bbox / scale_z

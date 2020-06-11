@@ -5,7 +5,7 @@ cfg = CfgNode(new_allowed=True)
 cfg.MODEL_ARC = 'BaseSiamModel'
 
 cfg.DATASET = CfgNode()
-cfg.DATASET.NAMES = ['VID']
+cfg.DATASET.NAMES = ['VID','DET','COCO','YOUTUBEBB']
 cfg.DATASET.COCO = CfgNode()
 cfg.DATASET.COCO.DATA_DIR = '../pysot/training_dataset/coco/crop511'
 cfg.DATASET.COCO.ANNO_FILE = '../pysot/training_dataset/coco/train2017.json'
@@ -139,21 +139,4 @@ cfg.TRACK.WINDOW_INFLUENCE = 0.40
 cfg.TRACK.LR = 0.3
 
 
-# graph
-# cfg.GRAPH = CfgNode()
-#
-# cfg.GRAPH.EXAMPLAR_SIZE = 10
-# cfg.GRAPH.UPDATE_FREQ = 5
-#
-# cfg.GRAPH.BATCH_SIZE = 1  # now only support 1
-# cfg.GRAPH.EPOCHS = 50
-# cfg.GRAPH.LR = 0.001
-# cfg.GRAPH.WEIGHT_DECAY = 0.0005
-# cfg.GRAPH.PRETRAIN_PATH = './snapshot/alexnet/checkpoint_e46.pth'
-#
-# cfg.GRAPH.SNAPSHOT_DIR = './snapshot/graph'
-# cfg.GRAPH.LOG_DIR = './logs/alexnet_graph'
-#
-# cfg.GRAPH.KWARGS = CfgNode(new_allowed=True)
-# cfg.GRAPH.KWARGS.input_channels = 256
-# cfg.GRAPH.KWARGS.output_channels = 256
+

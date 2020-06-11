@@ -121,10 +121,7 @@ class MobileNetV2(nn.Module):
             return outs[0]
         else:
             return outs
-        # x=getattr(self,'layer0')[0](x)
-        # x=getattr(self,'layer0')[1](x)
-        # return x
-        
+
 
 def mobilenet_v2(**kwargs):
     return MobileNetV2(**kwargs)

@@ -1,9 +1,11 @@
-from models.backbone.alexnet import alexnet,AlexNet
-from models.backbone.mobilenet_v2 import mobilenet_v2,MobileNetV2
+from models.backbone.alexnet import alexnet
+from models.backbone.mobilenet_v2 import mobilenet_v2
+from models.backbone.resnet import resnet50
 
 BACKBONES = {
-    'alexnet': AlexNet,
-    'mobilenetv2': MobileNetV2
+    'alexnet': alexnet,
+    'mobilenetv2': mobilenet_v2,
+    'resnet50': resnet50
 }
 
 

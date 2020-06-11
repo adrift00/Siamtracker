@@ -67,7 +67,6 @@ class SiamRPN(BaseTracker):
                  self.window * cfg.TRACK.WINDOW_INFLUENCE
         best_idx = np.argmax(pscore)
         best_bbox = pred_bbox[best_idx, :]
-        # show_single_bbox(search,best_bbox.tolist())
         best_bbox[0] -= cfg.TRACK.INSTANCE_SIZE // 2
         best_bbox[1] -= cfg.TRACK.INSTANCE_SIZE // 2
         best_bbox = best_bbox / scale_z
