@@ -56,7 +56,7 @@ class InvertedResidualsBlock(nn.Module):
             nn.ReLU6(inplace=True),
             # dw
             nn.Conv2d(inp * expand_ratio, inp * expand_ratio, 3,
-                      stride, padding, dilation=dilation, # padding differnt from mobilenetv2
+                      stride, padding, dilation=dilation,  # padding differnt from mobilenetv2
                       groups=inp * expand_ratio, bias=False),
             nn.BatchNorm2d(inp * expand_ratio),
             nn.ReLU6(inplace=True),
@@ -75,7 +75,7 @@ class InvertedResidualsBlock(nn.Module):
 class MobileNetV2(nn.Module):
     def __init__(self, width_mult=1.0, used_layers=[3, 5, 7]):
         super(MobileNetV2, self).__init__()
-        self.used_layers=used_layers
+        self.used_layers = used_layers
         in_channels = int(32 * width_mult)
         self.layer0 = nn.Sequential(
             nn.Conv2d(3, in_channels, 3, 2, 0, bias=False),
@@ -95,7 +95,7 @@ class MobileNetV2(nn.Module):
         last_dilation = 1
         for idx, (t, c, n, s, d) in enumerate(self.interverted_residual_setting, start=1):
             # out_channels = _make_divisible(c * width_mult, 4 if width_mult == 0.1 else 8)
-            out_channels=int(c*width_mult)
+            out_channels = int(c * width_mult)
             bottleneck = []
             for i in range(n):
                 if i == 0:
@@ -103,9 +103,9 @@ class MobileNetV2(nn.Module):
                         dd = d
                     else:
                         dd = max(d // 2, 1)
-                    bottleneck.append(InvertedResidualsBlock(in_channels, out_channels, s,t, dd))
+                    bottleneck.append(InvertedResidualsBlock(in_channels, out_channels, s, t, dd))
                 else:
-                    bottleneck.append(InvertedResidualsBlock(out_channels, out_channels, 1,t, d))
+                    bottleneck.append(InvertedResidualsBlock(out_channels, out_channels, 1, t, d))
             last_dilation = d
             in_channels = out_channels
             self.add_module('layer{}'.format(idx), nn.Sequential(*bottleneck))
@@ -134,5 +134,3 @@ if __name__ == '__main__':
     out = net(input)
     for i, o in enumerate(out):
         print(i, o.size())
-
-
