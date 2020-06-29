@@ -8,7 +8,7 @@ import torch
 import numpy as np
 
 from toolkit.utils.region import vot_overlap, vot_float2str
-from models.model_builder import BaseSiamModel
+from models import get_model
 from trackers import get_tracker
 from toolkit.datasets import get_dataset
 from utils.model_load import load_pretrain
@@ -134,7 +134,7 @@ if __name__ == '__main__':
     dataset = get_dataset(args.dataset, data_dir)
 
     # create model
-    model = BaseSiamModel()
+    model = get_model(cfg.MODEL_ARC)
 
     # load model
     model = load_pretrain(model, args.snapshot).cuda().eval()
