@@ -22,6 +22,8 @@ class Video(object):
             for (img_name, gt_rect) in zip(self.img_names, self.gt_rects):
                 img_path = os.path.join(self.data_dir, img_name)
                 img = cv2.imread(img_path)
+                # convert bgr to rgb in order to match pretrain model
+                img=cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
                 gt_bbox = get_axis_aligned_bbox(np.array(gt_rect))
                 yield img, gt_bbox
 
