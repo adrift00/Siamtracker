@@ -40,10 +40,10 @@ TRACK:
 
 TRAIN:
     EPOCHS: 50
-    START_EPOCH: 0
+    START_EPOCH: 34
     BATCH_SIZE: 28
-    RESUME: False
-    RESUME_PATH: ''
+    RESUME: True
+    RESUME_PATH: './snapshot/mobilenetv2/checkpoint_e34.pth'
     PRETRAIN: False
     PRETRAIN_PATH: ''
     BACKBONE_PRETRAIN: True
