@@ -192,7 +192,6 @@ class TrainDataset(Dataset):
         # mem = psutil.virtual_memory()
         # mem_used=mem.used/1024/1024
         #----------------------------------------------------
-
         examplar_img, examplar_bbox = self.template_aug(examplar_img,
                                                         examplar_bbox,
                                                         cfg.TRAIN.EXAMPLER_SIZE,
@@ -214,6 +213,7 @@ class TrainDataset(Dataset):
         gt_cls, gt_delta, delta_weight = self.anchor_target(search_bbox, neg)
         examplar_img = examplar_img.transpose((2, 0, 1)).astype(np.float32)  # NOTE: set as c,h,w and type=float32
         search_img = search_img.transpose((2, 0, 1)).astype(np.float32)
+        # convert bgr to rgb
         examplar_img=examplar_img[::-1].copy() # use copy for memory contiguous
         search_img=search_img[::-1].copy()
         return {
