@@ -7,7 +7,7 @@ My Implementation  of siamrpn++, mainly refers to [pysot](https://github.com/STV
 ## Some useless improments
 I try to make some improvements:
 1. Add meta-update for siamrpn++ to update model's parameters online, the meta update algorithm is based on [Meta-tracker: Fast and Robust Online Adaptation for Visual Object Trackers](https://arxiv.org/pdf/1801.03049.pdf).
-2. Use grad to update the template online, mainly refers to [GradNet: Gradient-Guided Network for Visual Object Tracking] (https://arxiv.org/pdf/1909.06800.pdf).
+2. Use grad to update the template online, mainly refers to [GradNet: Gradient-Guided Network for Visual Object Tracking](https://arxiv.org/pdf/1909.06800.pdf).
 
 Unfortunately, these methods have no obvious effect when they are applied to siamrpn++.
 
